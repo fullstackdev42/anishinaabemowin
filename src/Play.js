@@ -31,12 +31,22 @@ export class Play extends Phaser.Scene
 
     // Grid configuration
     gridConfiguration = {
-        x: 200,
+        x: 150,
         y: 50,
         paddingX: 20,
-        paddingY: 10,
-        cardScale: 0.4
+        paddingY: 20,
+        cardWidth: 200,
+        cardHeight: 100
     }
+
+    // Word pairs (English-Ojibwe)
+    wordPairs = [
+        { english: "Hello", ojibwe: "Aaniin" },
+        { english: "Thank you", ojibwe: "Miigwech" },
+        { english: "Water", ojibwe: "Nibi" },
+        { english: "Sun", ojibwe: "Giizis" },
+        { english: "Friend", ojibwe: "Niijii" }
+    ];
 
     constructor ()
     {
@@ -108,8 +118,8 @@ export class Play extends Phaser.Scene
             this.add.tween({
                 targets: card.gameObject,
                 duration: 500,
-                y: 1000,
                 delay: index * 100,
+                y: 1000,
                 onComplete: () => {
                     card.gameObject.destroy();
                 }
@@ -127,29 +137,32 @@ export class Play extends Phaser.Scene
         })
     }
 
-    createGridCards ()
+    createGridCards()
     {
-        // Phaser random array position
-        const gridCardNames = Phaser.Utils.Array.Shuffle([...this.cardNames, ...this.cardNames]);
+        // Shuffle the word pairs
+        const shuffledPairs = Phaser.Utils.Array.Shuffle([...this.wordPairs]);
 
-        return gridCardNames.slice(0, 10).map((name, index) => { // Only use 10 cards
-            const newCard = createCard({
-                scene: this,
-                x: this.gridConfiguration.x + (98 * this.gridConfiguration.cardScale + this.gridConfiguration.paddingX) * (index % 2),
-                y: -1000,
-                frontTexture: name,
-                cardName: name
-            });
-            newCard.gameObject.setScale(this.gridConfiguration.cardScale);
-            this.add.tween({
-                targets: newCard.gameObject,
-                duration: 800,
-                delay: index * 100,
-                onStart: () => this.sound.play("card-slide", { volume: 1.2 }),
-                y: this.gridConfiguration.y + (128 * this.gridConfiguration.cardScale + this.gridConfiguration.paddingY) * Math.floor(index / 2)
-            })
-            return newCard;
+        return shuffledPairs.flatMap((pair, index) => {
+            const englishCard = this.createWordCard(pair.english, 0, index);
+            const ojibweCard = this.createWordCard(pair.ojibwe, 1, index);
+            return [englishCard, ojibweCard];
         });
+    }
+
+    createWordCard(word, column, row)
+    {
+        const x = this.gridConfiguration.x + (this.gridConfiguration.cardWidth + this.gridConfiguration.paddingX) * column;
+        const y = this.gridConfiguration.y + (this.gridConfiguration.cardHeight + this.gridConfiguration.paddingY) * row;
+
+        const card = this.add.rectangle(x, y, this.gridConfiguration.cardWidth, this.gridConfiguration.cardHeight, 0xffffff);
+        card.setStrokeStyle(2, 0x000000);
+
+        const text = this.add.text(x, y, word, {
+            font: '24px Arial',
+            color: '#000000'
+        }).setOrigin(0.5);
+
+        return { card, text };
     }
 
     createHearts ()
