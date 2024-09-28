@@ -31,10 +31,11 @@ export class Play extends Phaser.Scene
 
     // Grid configuration
     gridConfiguration = {
-        x: 113,
-        y: 102,
-        paddingX: 10,
-        paddingY: 10
+        x: 200,
+        y: 50,
+        paddingX: 20,
+        paddingY: 10,
+        cardScale: 0.4
     }
 
     constructor ()
@@ -131,20 +132,21 @@ export class Play extends Phaser.Scene
         // Phaser random array position
         const gridCardNames = Phaser.Utils.Array.Shuffle([...this.cardNames, ...this.cardNames]);
 
-        return gridCardNames.map((name, index) => {
+        return gridCardNames.slice(0, 10).map((name, index) => { // Only use 10 cards
             const newCard = createCard({
                 scene: this,
-                x: this.gridConfiguration.x + (98 + this.gridConfiguration.paddingX) * (index % 4),
+                x: this.gridConfiguration.x + (98 * this.gridConfiguration.cardScale + this.gridConfiguration.paddingX) * (index % 2),
                 y: -1000,
                 frontTexture: name,
                 cardName: name
             });
+            newCard.gameObject.setScale(this.gridConfiguration.cardScale);
             this.add.tween({
                 targets: newCard.gameObject,
                 duration: 800,
                 delay: index * 100,
                 onStart: () => this.sound.play("card-slide", { volume: 1.2 }),
-                y: this.gridConfiguration.y + (128 + this.gridConfiguration.paddingY) * Math.floor(index / 4)
+                y: this.gridConfiguration.y + (128 * this.gridConfiguration.cardScale + this.gridConfiguration.paddingY) * Math.floor(index / 2)
             })
             return newCard;
         });
