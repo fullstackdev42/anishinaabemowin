@@ -232,6 +232,8 @@ export class Play extends Phaser.Scene
             }
         });
 
+        let go;
+
         // Game Logic
         this.input.on(Phaser.Input.Events.POINTER_MOVE, (pointer) => {
             if (this.canMove) {
