@@ -3,27 +3,13 @@ import Phaser from 'phaser';
 import { createGameText, setupVolumeEvents, setupTitleEvents } from './PlayUtils';
 import { UIManager } from './UIManager';
 import { CardGrid } from './CardGrid';
+import { CardMatchLogic } from './CardMatchLogic';
+import { GameState } from './GameState';
 
 export class Play extends Phaser.Scene {
-    // All cards names
-    cardNames = ["card-0", "card-1", "card-2", "card-3", "card-4", "card-5"];
-    // Cards Game Objects
-    cards = [];
-
-    // History of card opened
-    cardOpened = undefined;
-
-    // Can play the game
-    canMove = false;
-
-    // Game variables
-    lives = 0;
-
     // Card constants
     CARD_WIDTH = 98;
     CARD_HEIGHT = 128;
-    TOTAL_PAIRS = 5;
-    TOTAL_CARDS = this.TOTAL_PAIRS * 2;
 
     // Grid configuration
     gridConfiguration = {
@@ -42,17 +28,20 @@ export class Play extends Phaser.Scene {
         });
 
         this.cardGrid = null;
+        this.cardMatchLogic = null;
+        this.gameState = null;
 
         this.debugGraphics = null;
         this.debugText = null;
     }
 
     init() {
+        this.gameState = new GameState(this);
         this.uiManager = new UIManager(this);
         this.cardGrid = new CardGrid(this);
         this.cameras.main.fadeIn(500);
-        this.lives = 10;
         this.volumeButton();
+        this.cardMatchLogic = new CardMatchLogic(this);
 
         // Calculate the vertical center position for the grid
         const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
@@ -105,9 +94,9 @@ export class Play extends Phaser.Scene {
     }
 
     restartGame() {
-        this.cardOpened = undefined;
-        this.cameras.main.fadeOut(200 * this.cards.length);
-        this.cards.reverse().map((card, index) => {
+        this.gameState.resetState();
+        this.cameras.main.fadeOut(200 * this.gameState.cards.length);
+        this.gameState.cards.reverse().map((card, index) => {
             this.add.tween({
                 targets: card.gameObject,
                 duration: 500,
@@ -120,10 +109,8 @@ export class Play extends Phaser.Scene {
         });
 
         this.time.addEvent({
-            delay: 200 * this.cards.length,
+            delay: 200 * this.gameState.cards.length,
             callback: () => {
-                this.cards = [];
-                this.canMove = false;
                 this.scene.restart();
                 this.sound.play("card-slide", { volume: 1.2 });
             }
@@ -135,7 +122,7 @@ export class Play extends Phaser.Scene {
     }
 
     createHearts() {
-        this.uiManager.createHearts(this.lives);
+        this.uiManager.createHearts(this.gameState.lives);
     }
 
     volumeButton() {
@@ -147,12 +134,12 @@ export class Play extends Phaser.Scene {
         this.gameOverText = this.uiManager.createGameText("GAME OVER\nClick to restart", "#ff0000");
     
         this.hearts = this.createHearts();
-        this.cards = this.createGridCards();
+        this.gameState.cards = this.createGridCards();
     
         this.time.addEvent({
-            delay: 200 * this.cards.length,
+            delay: 200 * this.gameState.cards.length,
             callback: () => {
-                this.canMove = true;
+                this.gameState.canMove = true;
             }
         });
     
@@ -169,8 +156,8 @@ export class Play extends Phaser.Scene {
     }
 
     handlePointerMove(pointer) {
-        if (this.canMove) {
-            const card = this.cards.find(card => card.hasFaceAt(pointer.x, pointer.y));
+        if (this.gameState.canMove) {
+            const card = this.gameState.cards.find(card => card.hasFaceAt(pointer.x, pointer.y));
             if (card) {
                 this.input.setDefaultCursor("pointer");
             } else {
@@ -185,87 +172,37 @@ export class Play extends Phaser.Scene {
     }
 
     handlePointerDown(pointer) {
-        if (this.canMove && this.cards.length) {
-            const card = this.cards.find(card => card.hasFaceAt(pointer.x, pointer.y));
+        if (this.gameState.canMove && this.gameState.cards.length) {
+            const card = this.gameState.cards.find(card => card.hasFaceAt(pointer.x, pointer.y));
             if (card) {
-                this.handleCardSelect(card);
+                this.cardMatchLogic.handleCardSelect(card);
             }
         }
-    }
-
-    handleCardSelect(card) {
-        if (!this.canMove) return;
-
-        if (this.selectedCard === undefined) {
-            this.selectedCard = card;
-            // No need to flip, just highlight the card
-            card.gameObject.setTint(0x00ff00);
-        } else {
-            if (this.selectedCard === card) {
-                // Clicked the same card twice, unhighlight it
-                card.gameObject.clearTint();
-                this.selectedCard = undefined;
-            } else {
-                this.canMove = false;
-                // Highlight the second card
-                card.gameObject.setTint(0x00ff00);
-
-                if (this.selectedCard.cardName === card.cardName) {
-                    this.handleMatch(this.selectedCard, card);
-                } else {
-                    this.handleMismatch(this.selectedCard, card);
-                }
-                this.checkGameStatus();
-            }
-        }
-    }
-
-    handleMatch(card1, card2) {
-        this.sound.play("card-match");
-        this.time.delayedCall(500, () => {
-            card1.destroy();
-            card2.destroy();
-            this.cardGrid.removeCard(card1);
-            this.cardGrid.removeCard(card2);
-            this.selectedCard = undefined;
-            this.canMove = true;
-        });
-    }
-
-    handleMismatch(card1, card2) {
-        this.sound.play("card-mismatch");
-        this.cameras.main.shake(600, 0.01);
-        this.time.delayedCall(1000, () => {
-            card1.gameObject.clearTint();
-            card2.gameObject.clearTint();
-            this.selectedCard = undefined;
-            this.removeLife();
-            this.canMove = true;
-        });
     }
 
     removeLife() {
         this.uiManager.removeLife();
-        this.lives -= 1;
+        this.gameState.removeLife();
     }
 
     checkGameStatus() {
-        if (this.lives === 0) {
+        const status = this.gameState.checkGameStatus();
+        if (status === 'gameOver') {
             this.showGameOverText();
-        } else if (this.cards.length === 0) {
+        } else if (status === 'win') {
             this.showWinnerText();
         }
     }
 
     showGameOverText() {
         this.showAnimatedText(this.gameOverText);
-        this.canMove = false;
+        this.gameState.canMove = false;
     }
 
     showWinnerText() {
         this.sound.play("victory");
         this.showAnimatedText(this.winnerText);
-        this.canMove = false;
+        this.gameState.canMove = false;
     }
 
     showAnimatedText(text) {
@@ -297,7 +234,7 @@ export class Play extends Phaser.Scene {
         // Draw card positions
         this.debugGraphics.lineStyle(2, 0xff0000);
         let debugInfo = 'Card Positions:\n';
-        this.cards.forEach((card, index) => {
+        this.gameState.cards.forEach((card, index) => {
             const x = card.x;
             const y = card.y;
             this.debugGraphics.strokeCircle(x, y, 5);
