@@ -1,7 +1,7 @@
 export class GameState {
     constructor(scene) {
         this.scene = scene;
-        this.cardNames = ["card-0", "card-1", "card-2", "card-3", "card-4", "card-5"];
+        this.cardNames = ["card-0", "card-1", "card-2", "card-3", "card-4"];
         this.cards = [];
         this.cardOpened = undefined;
         this.canMove = false;

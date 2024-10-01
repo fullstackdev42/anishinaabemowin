@@ -1,5 +1,5 @@
-import { createCard } from './createCard';
 import { CARD_WIDTH, CARD_HEIGHT } from './constants';
+import { createCard } from './createCard';  // Add this import
 
 export class CardGrid {
     constructor(scene, config) {
@@ -8,60 +8,29 @@ export class CardGrid {
         this.cards = [];
     }
 
-    createGridCards(playArea) {
-        const { columns, rows, paddingX, paddingY } = this.config;
-        const totalCards = columns * rows;
+    createGrid(cardData) {
+        const { x, y, paddingX, paddingY, cardScale } = this.config;
+        const scaledCardWidth = CARD_WIDTH * cardScale;
+        const scaledCardHeight = CARD_HEIGHT * cardScale;
+        const columns = 2;
+        const rows = 5;
 
-        // Calculate the maximum card size that fits in the play area
-        const maxCardWidth = (playArea.width - (columns - 1) * paddingX) / columns;
-        const maxCardHeight = (playArea.height - (rows - 1) * paddingY) / rows;
+        return cardData.map((data, index) => {
+            const col = index % columns;
+            const row = Math.floor(index / columns);
+            const cardX = x + scaledCardWidth * col + paddingX * (col + 1);
+            const cardY = y + scaledCardHeight * row + paddingY * (row + 1);
 
-        // Determine the scale factor to maintain aspect ratio
-        const scaleX = maxCardWidth / CARD_WIDTH;
-        const scaleY = maxCardHeight / CARD_HEIGHT;
-        const scale = Math.min(scaleX, scaleY);
-
-        // Calculate the actual card dimensions
-        const cardWidth = CARD_WIDTH * scale;
-        const cardHeight = CARD_HEIGHT * scale;
-
-        for (let i = 0; i < totalCards; i++) {
-            const position = this.calculateGridPosition(i, playArea, cardWidth, cardHeight);
             const card = createCard({
                 scene: this.scene,
-                x: position.x,
-                y: position.y,
-                cardText: `Card ${i}`,
-                cardName: `card-${i}`
+                x: cardX,
+                y: cardY,
+                cardText: data.text,
+                cardName: data.name
             });
             this.cards.push(card);
-        }
-
-        return this.cards;
-    }
-
-    calculateGridPosition(index, playArea, cardWidth, cardHeight) {
-        const { columns, rows, paddingX, paddingY } = this.config;
-
-        // Calculate the total width and height of the grid
-        const totalWidth = columns * cardWidth + (columns - 1) * paddingX;
-        const totalHeight = rows * cardHeight + (rows - 1) * paddingY;
-
-        // Calculate the left edge of the grid
-        const startX = 0;
-        const startY = playArea.y - totalHeight / 2;
-
-        // Calculate the column and row of the current card
-        const col = index % columns;
-        const row = Math.floor(index / columns);
-
-        // Calculate x and y positions
-        const x = startX + col * (cardWidth + paddingX) + cardWidth / 2;
-        const y = startY + row * (cardHeight + paddingY) + cardHeight / 2;
-
-        console.log(`Card ${index} position: x=${x}, y=${y}`);
-
-        return { x, y };
+            return card;
+        });
     }
 
     getCards() {

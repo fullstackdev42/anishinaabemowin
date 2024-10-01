@@ -12,8 +12,8 @@ export class Play extends Phaser.Scene {
     gridConfiguration = {
         x: 0,
         y: 0,
-        paddingX: 5,
-        paddingY: 2,
+        paddingX: 2,  // Reduced from 5
+        paddingY: 1,  // Reduced from 2
         columns: 2,
         rows: 5,
         cardScale: 1
@@ -79,10 +79,15 @@ export class Play extends Phaser.Scene {
         // Initialize game components without creating cards
         this.gameState = new GameState(this);
         this.cardMatchLogic = new CardMatchLogic(this);
-        this.debugManager = new DebugManager(this);
 
-        // Store the playArea for later use
-        this.playArea = playArea;
+        // Initialize the CardGrid
+        this.cardGrid = new CardGrid(this, {
+            x: 50,  // Adjust these values as needed
+            y: 100,
+            paddingX: 10,
+            paddingY: 10,
+            cardScale: 1
+        });
 
         // Start the game
         this.startGame();
@@ -117,40 +122,28 @@ export class Play extends Phaser.Scene {
     }
 
     startGame() {
-        this.winnerText = this.uiManager.createGameText("YOU WIN", "#8c7ae6");
-        this.gameOverText = this.uiManager.createGameText("GAME OVER\nClick to restart", "#ff0000");
+        // Create the card data array
+        const cardData = this.gameState.cardNames.flatMap(name => [
+            { text: name, name: name },
+            { text: name, name: name }
+        ]);
+        
+        // Shuffle the card data
+        Phaser.Utils.Array.Shuffle(cardData);
 
-        // Use the stored playArea instead of creating a new one
-        this.gameState.cards = this.cardGrid.createGridCards(this.playArea);
-        console.log('Created cards:', this.gameState.cards);
+        // Create the grid of cards
+        this.gameState.cards = this.cardGrid.createGrid(cardData);
 
-        if (!Array.isArray(this.gameState.cards) || this.gameState.cards.length === 0) {
-            console.error('No cards were created. Check the createGridCards method.');
-            return;
-        }
-
-        this.gameState.cards.forEach((card, index) => {
-            console.log(`Card ${index}:`, card);
-            if (card && card.gameObject) {
-                console.log(`Card ${index} position:`, card.x, card.y);
-                card.gameObject.on('pointerdown', () => {
-                    this.cardMatchLogic.handleCardSelect(card);
-                });
-            } else {
-                console.error(`Card ${index} or its gameObject is undefined.`);
-            }
+        // Set up card interactions
+        this.gameState.cards.forEach(card => {
+            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
         });
 
-        this.time.addEvent({
-            delay: 200 * this.gameState.cards.length,
-            callback: () => {
-                this.gameState.canMove = true;
-            }
-        });
+        // Enable input for all cards
+        this.gameState.canMove = true;
 
-        this.uiManager.createHearts(this.gameState.lives);
-
-        this.setupGameEvents();
+        // Update debug info
+        this.debugManager.updateDebugInfo(this.gameState, this.gridConfiguration);
     }
 
     setupGameEvents() {
