@@ -2,6 +2,7 @@ import { createCard } from './createCard';
 import Phaser from 'phaser';
 import { createGameText, setupVolumeEvents, setupTitleEvents } from './PlayUtils';
 import { UIManager } from './UIManager';
+import { CardGrid } from './CardGrid';
 
 export class Play extends Phaser.Scene {
     // All cards names
@@ -40,12 +41,15 @@ export class Play extends Phaser.Scene {
             key: 'Play'
         });
 
+        this.cardGrid = null;
+
         this.debugGraphics = null;
         this.debugText = null;
     }
 
     init() {
         this.uiManager = new UIManager(this);
+        this.cardGrid = new CardGrid(this);
         this.cameras.main.fadeIn(500);
         this.lives = 10;
         this.volumeButton();
@@ -127,36 +131,7 @@ export class Play extends Phaser.Scene {
     }
 
     createGridCards() {
-        // Select 5 random card names from the available cardNames
-        const selectedCardNames = Phaser.Utils.Array.Shuffle([...this.cardNames]).slice(0, this.TOTAL_PAIRS);
-        // Create pairs and shuffle
-        const gridCardNames = Phaser.Utils.Array.Shuffle([...selectedCardNames, ...selectedCardNames]);
-
-        const scaledCardWidth = this.CARD_WIDTH * this.gridConfiguration.cardScale;
-        const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
-
-        return gridCardNames.map((name, index) => {
-            const x = this.gridConfiguration.x + (scaledCardWidth + this.gridConfiguration.paddingX) * (index % this.gridConfiguration.columns);
-            const y = this.gridConfiguration.y + (scaledCardHeight + this.gridConfiguration.paddingY) * Math.floor(index / this.gridConfiguration.columns);
-
-            const newCard = this.add.sprite(x, -1000, name);
-            newCard.setScale(this.gridConfiguration.cardScale);
-            newCard.setInteractive();
-            newCard.on('pointerdown', () => this.handleCardSelect(newCard));
-
-            // Store the card name for matching logic
-            newCard.cardName = name;
-
-            this.add.tween({
-                targets: newCard,
-                duration: 800,
-                delay: index * 100,
-                onStart: () => this.sound.play("card-slide", { volume: 1.2 }),
-                y: y
-            });
-
-            return newCard;
-        });
+        return this.cardGrid.createGridCards();
     }
 
     createHearts() {
@@ -223,15 +198,18 @@ export class Play extends Phaser.Scene {
 
         if (this.selectedCard === undefined) {
             this.selectedCard = card;
-            // Add visual indication that the card is selected
-            card.setTint(0x00ff00);
+            // No need to flip, just highlight the card
+            card.gameObject.setTint(0x00ff00);
         } else {
             if (this.selectedCard === card) {
-                // Clicked the same card twice, deselect it
-                this.selectedCard.clearTint();
+                // Clicked the same card twice, unhighlight it
+                card.gameObject.clearTint();
                 this.selectedCard = undefined;
             } else {
                 this.canMove = false;
+                // Highlight the second card
+                card.gameObject.setTint(0x00ff00);
+
                 if (this.selectedCard.cardName === card.cardName) {
                     this.handleMatch(this.selectedCard, card);
                 } else {
@@ -247,7 +225,8 @@ export class Play extends Phaser.Scene {
         this.time.delayedCall(500, () => {
             card1.destroy();
             card2.destroy();
-            this.cards = this.cards.filter(c => c !== card1 && c !== card2);
+            this.cardGrid.removeCard(card1);
+            this.cardGrid.removeCard(card2);
             this.selectedCard = undefined;
             this.canMove = true;
         });
@@ -257,8 +236,8 @@ export class Play extends Phaser.Scene {
         this.sound.play("card-mismatch");
         this.cameras.main.shake(600, 0.01);
         this.time.delayedCall(1000, () => {
-            card1.clearTint();
-            card2.clearTint();
+            card1.gameObject.clearTint();
+            card2.gameObject.clearTint();
             this.selectedCard = undefined;
             this.removeLife();
             this.canMove = true;

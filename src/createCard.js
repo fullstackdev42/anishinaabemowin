@@ -1,6 +1,5 @@
-/**
- * Create a card game object
- */
+import Phaser from 'phaser';
+
 export const createCard = ({
     scene,
     x,
@@ -8,74 +7,32 @@ export const createCard = ({
     frontTexture,
     cardName
 }) => {
-    let isFlipping = false;
-    const rotation = { y: 0 };
-    const backTexture = "card-back";
-
-    const card = scene.add.plane(x, y, backTexture)
+    const card = scene.add.image(x, y, frontTexture)
         .setName(cardName)
         .setInteractive();
 
-    // start with the card face down
-    card.modelRotationY = 180;
-
-    const flipCard = (callbackComplete) => {
-        if (isFlipping) {
-            return;
-        }
-        scene.add.tween({
-            targets: [rotation],
-            y: (rotation.y === 180) ? 0 : 180,
-            ease: Phaser.Math.Easing.Expo.Out,
-            duration: 500,
-            onStart: () => {
-                isFlipping = true;
-                scene.sound.play("card-flip");
-                scene.tweens.chain({
-                    targets: card,
-                    ease: Phaser.Math.Easing.Expo.InOut,
-                    tweens: [
-                        { duration: 200, scale: 1.1 },
-                        { duration: 300, scale: 1 },
-                    ]
-                })
-            },
-            onUpdate: () => {
-                card.rotateY = 180 + rotation.y;
-                const cardRotation = Math.floor(card.rotateY) % 360;
-                if ((cardRotation >= 0 && cardRotation <= 90) || (cardRotation >= 270 && cardRotation <= 359)) {
-                    card.setTexture(frontTexture);
-                } else {
-                    card.setTexture(backTexture);
-                }
-            },
-            onComplete: () => {
-                isFlipping = false;
-                if (callbackComplete) {
-                    callbackComplete();
-                }
-            }
-        });
-    }
+    card.setScale(0.5); // Adjust the scale as needed
 
     const destroy = (tweenConfig = {
         y: card.y - 1000,
-        easing: Phaser.Math.Easing.Elastic.In,
+        ease: 'Back.easeIn',
         duration: 500
     }) => {
-        scene.add.tween({
-            targets: [card],
+        scene.tweens.add({
+            targets: card,
             ...tweenConfig,
             onComplete: () => {
                 card.destroy();
             }
         });
-    }
+    };
 
     return {
         gameObject: card,
-        flip: flipCard,
         destroy,
-        cardName
-    }
-}
+        cardName,
+        x: card.x,
+        y: card.y,
+        hasFaceAt: (x, y) => card.getBounds().contains(x, y)
+    };
+};
