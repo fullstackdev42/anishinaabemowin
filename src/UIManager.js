@@ -7,6 +7,51 @@ export class UIManager {
         this.hearts = [];
     }
 
+    createHeader() {
+        const header = this.scene.add.rectangle(
+            this.scene.sys.game.config.width / 2,
+            50,
+            this.scene.sys.game.config.width,
+            100,
+            0x000000
+        ).setOrigin(0.5);
+        this.scene.add.text(
+            this.scene.sys.game.config.width / 2,
+            50,
+            "Game Header",
+            { fontSize: '32px', color: '#ffffff' }
+        ).setOrigin(0.5);
+        return header;
+    }
+    
+    createFooter() {
+        const footer = this.scene.add.rectangle(
+            this.scene.sys.game.config.width / 2,
+            this.scene.sys.game.config.height - 50,
+            this.scene.sys.game.config.width,
+            100,
+            0x000000
+        ).setOrigin(0.5);
+        this.scene.add.text(
+            this.scene.sys.game.config.width / 2,
+            this.scene.sys.game.config.height - 50,
+            "Game Footer",
+            { fontSize: '32px', color: '#ffffff' }
+        ).setOrigin(0.5);
+        return footer;
+    }
+    
+    createPlayArea() {
+        const playArea = this.scene.add.rectangle(
+            this.scene.sys.game.config.width / 2,
+            this.scene.sys.game.config.height / 2,
+            this.scene.sys.game.config.width,
+            this.scene.sys.game.config.height - 200,
+            0x1e1e1e
+        ).setOrigin(0.5);
+        return playArea;
+    }
+
     createVolumeButton() {
         const volumeIcon = this.scene.add.image(25, 25, "volume-icon").setName("volume-icon");
         volumeIcon.setInteractive();
@@ -15,8 +60,11 @@ export class UIManager {
     }
 
     createHearts(lives) {
+        const headerHeight = 100; // Assuming header height is 100
+        const heartYPosition = headerHeight / 2; // Center hearts vertically within the header
+
         this.hearts = Array.from(new Array(lives)).map((el, index) => {
-            const heart = this.scene.add.image(this.scene.sys.game.scale.width + 1000, 20, "heart")
+            const heart = this.scene.add.image(this.scene.sys.game.scale.width + 1000, heartYPosition, "heart")
                 .setScale(2);
 
             this.scene.add.tween({

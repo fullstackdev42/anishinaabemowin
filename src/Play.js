@@ -52,13 +52,21 @@ export class Play extends Phaser.Scene {
     create() {
         // Center the background image
         const background = this.add.image(this.sys.game.config.width / 2, this.sys.game.config.height / 2, "background");
-
+    
         // Scale the background to cover the entire game area while maintaining aspect ratio
         const scaleX = this.sys.game.config.width / background.width;
         const scaleY = this.sys.game.config.height / background.height;
         const scale = Math.max(scaleX, scaleY);
         background.setScale(scale);
+    
+        // Create UI elements
+        this.uiManager.createHeader();
+        this.uiManager.createFooter();
+        this.uiManager.createPlayArea();
 
+        // Create hearts within the header
+        this.uiManager.createHearts(this.gameState.lives);
+    
         const titleText = this.add.text(this.sys.game.scale.width / 2, this.sys.game.scale.height / 2,
             "Card Matching Game\nClick to Play",
             { align: "center", strokeThickness: 4, fontSize: 40, fontStyle: "bold", color: "#8c7ae6" }
@@ -66,7 +74,7 @@ export class Play extends Phaser.Scene {
             .setOrigin(.5)
             .setDepth(3)
             .setInteractive();
-
+    
         this.add.tween({
             targets: titleText,
             duration: 800,
@@ -75,9 +83,9 @@ export class Play extends Phaser.Scene {
             repeat: -1,
             yoyo: true,
         });
-
+    
         setupTitleEvents(this, titleText);
-
+    
         // Initialize game components without creating cards
         this.cardGrid = new CardGrid(this, this.gridConfiguration);
         this.gameState = new GameState(this);
@@ -110,14 +118,6 @@ export class Play extends Phaser.Scene {
         })
     }
 
-    createGridCards() {
-        return this.cardGrid.createGridCards();
-    }
-
-    createHearts() {
-        this.uiManager.createHearts(this.gameState.lives);
-    }
-
     volumeButton() {
         this.uiManager.createVolumeButton();
     }
@@ -126,7 +126,6 @@ export class Play extends Phaser.Scene {
         this.winnerText = this.uiManager.createGameText("YOU WIN", "#8c7ae6");
         this.gameOverText = this.uiManager.createGameText("GAME OVER\nClick to restart", "#ff0000");
 
-        this.hearts = this.createHearts();
         this.gameState.cards = this.cardGrid.createGridCards();
         console.log('Created cards:', this.gameState.cards);
 
