@@ -1,10 +1,10 @@
-import { createCard } from './createCard';
 import Phaser from 'phaser';
 import { createGameText, setupVolumeEvents, setupTitleEvents } from './PlayUtils';
 import { UIManager } from './UIManager';
 import { CardGrid } from './CardGrid';
 import { CardMatchLogic } from './CardMatchLogic';
 import { GameState } from './GameState';
+import { DebugManager } from './DebugManager';
 
 export class Play extends Phaser.Scene {
     // Card constants
@@ -18,8 +18,8 @@ export class Play extends Phaser.Scene {
         cardScale: 0.5,
         paddingX: 10,
         paddingY: 10,
-        columns: 5,
-        rows: 2
+        columns: 2,
+        rows: 5
     }
 
     constructor() {
@@ -31,14 +31,13 @@ export class Play extends Phaser.Scene {
         this.cardMatchLogic = null;
         this.gameState = null;
 
-        this.debugGraphics = null;
-        this.debugText = null;
+        this.debugManager = null;
     }
 
     init() {
         this.gameState = new GameState(this);
         this.uiManager = new UIManager(this);
-        this.cardGrid = new CardGrid(this);
+        this.cardGrid = new CardGrid(this, this.gridConfiguration);
         this.cameras.main.fadeIn(500);
         this.volumeButton();
         this.cardMatchLogic = new CardMatchLogic(this);
@@ -47,6 +46,8 @@ export class Play extends Phaser.Scene {
         const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
         const gridHeight = (scaledCardHeight * 2) + this.gridConfiguration.paddingY;
         this.gridConfiguration.y = (this.sys.game.config.height - gridHeight) / 2;
+
+        this.debugManager = new DebugManager(this);
     }
 
     create() {
@@ -73,24 +74,7 @@ export class Play extends Phaser.Scene {
         setupTitleEvents(this, titleText);
 
         // Create debug overlay
-        this.createDebugOverlay();
-    }
-
-    createDebugOverlay() {
-        this.debugGraphics = this.add.graphics();
-        this.debugGraphics.setDepth(1000); // Ensure it's drawn on top
-
-        this.debugText = this.add.text(10, 10, '', {
-            font: '14px Arial',
-            fill: '#00ff00'
-        });
-        this.debugText.setDepth(1001); // Ensure it's drawn on top of the graphics
-
-        // Add a toggle key for debug info
-        this.input.keyboard.on('keydown-D', () => {
-            this.debugGraphics.visible = !this.debugGraphics.visible;
-            this.debugText.visible = !this.debugText.visible;
-        });
+        this.debugManager.createDebugOverlay();
     }
 
     restartGame() {
@@ -210,44 +194,6 @@ export class Play extends Phaser.Scene {
     }
 
     update() {
-        this.updateDebugInfo();
-    }
-
-    updateDebugInfo() {
-        if (!this.debugGraphics.visible) return;
-
-        this.debugGraphics.clear();
-
-        const scaledCardWidth = this.CARD_WIDTH * this.gridConfiguration.cardScale;
-        const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
-
-        // Draw grid
-        this.debugGraphics.lineStyle(1, 0x00ff00);
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 2; j++) {
-                const x = this.gridConfiguration.x + (scaledCardWidth + this.gridConfiguration.paddingX) * i;
-                const y = this.gridConfiguration.y + (scaledCardHeight + this.gridConfiguration.paddingY) * j;
-                this.debugGraphics.strokeRect(x, y, scaledCardWidth, scaledCardHeight);
-            }
-        }
-
-        // Draw card positions
-        this.debugGraphics.lineStyle(2, 0xff0000);
-        let debugInfo = 'Card Positions:\n';
-        this.gameState.cards.forEach((card, index) => {
-            const x = card.x;
-            const y = card.y;
-            this.debugGraphics.strokeCircle(x, y, 5);
-            debugInfo += `Card ${index}: (${Math.round(x)}, ${Math.round(y)})\n`;
-        });
-
-        // Update debug text
-        debugInfo += `\nGrid Configuration:\n`;
-        debugInfo += `x: ${this.gridConfiguration.x}, y: ${this.gridConfiguration.y}\n`;
-        debugInfo += `cardScale: ${this.gridConfiguration.cardScale}\n`;
-        debugInfo += `paddingX: ${this.gridConfiguration.paddingX}, paddingY: ${this.gridConfiguration.paddingY}\n`;
-        debugInfo += `cardWidth: ${scaledCardWidth}, cardHeight: ${scaledCardHeight}\n`;
-
-        this.debugText.setText(debugInfo);
+        this.debugManager.updateDebugInfo(this.gameState, this.gridConfiguration);
     }
 }
