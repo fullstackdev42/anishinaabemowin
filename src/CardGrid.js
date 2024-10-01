@@ -1,6 +1,5 @@
 import { createCard } from './createCard';
 import { CARD_WIDTH, CARD_HEIGHT } from './constants';
-import Phaser from 'phaser';
 
 export class CardGrid {
     constructor(scene, config) {
@@ -10,14 +9,24 @@ export class CardGrid {
     }
 
     createGridCards(playArea) {
-        const { columns, rows } = this.config;
+        const { columns, rows, paddingX, paddingY } = this.config;
         const totalCards = columns * rows;
-        const playAreaCoords = this.scene.uiManager.getPlayAreaCoordinates();
 
-        console.log(playAreaCoords);
+        // Calculate the maximum card size that fits in the play area
+        const maxCardWidth = (playArea.width - (columns - 1) * paddingX) / columns;
+        const maxCardHeight = (playArea.height - (rows - 1) * paddingY) / rows;
+
+        // Determine the scale factor to maintain aspect ratio
+        const scaleX = maxCardWidth / CARD_WIDTH;
+        const scaleY = maxCardHeight / CARD_HEIGHT;
+        const scale = Math.min(scaleX, scaleY);
+
+        // Calculate the actual card dimensions
+        const cardWidth = CARD_WIDTH * scale;
+        const cardHeight = CARD_HEIGHT * scale;
 
         for (let i = 0; i < totalCards; i++) {
-            const position = this.calculateGridPosition(i, playAreaCoords);
+            const position = this.calculateGridPosition(i, playArea, cardWidth, cardHeight);
             const card = createCard({
                 scene: this.scene,
                 x: position.x,
@@ -31,20 +40,20 @@ export class CardGrid {
         return this.cards;
     }
 
-    calculateGridPosition(index, playAreaCoords) {
+    calculateGridPosition(index, playArea, cardWidth, cardHeight) {
         const { columns, paddingX, paddingY } = this.config;
-        const cardWidth = CARD_WIDTH;
-        const cardHeight = CARD_HEIGHT;
-    
+
         const gridWidth = columns * cardWidth + (columns - 1) * paddingX;
-        const gridHeight = Math.ceil(index / columns) * cardHeight + (Math.ceil(index / columns) - 1) * paddingY;
-    
-        const offsetX = (playAreaCoords.width - gridWidth) / 2;
-        const offsetY = (playAreaCoords.height - gridHeight) / 2;
-    
-        const x = playAreaCoords.x + offsetX + (index % columns) * (cardWidth + paddingX);
-        const y = playAreaCoords.y + offsetY + Math.floor(index / columns) * (cardHeight + paddingY);
-    
+        const gridHeight = Math.ceil(this.config.rows) * cardHeight + (Math.ceil(this.config.rows) - 1) * paddingY;
+
+        const offsetX = (playArea.width - gridWidth) / 2;
+        const offsetY = (playArea.height - gridHeight) / 2;
+
+        const x = playArea.x - playArea.width / 2 + offsetX + (index % columns) * (cardWidth + paddingX) + cardWidth / 2;
+        const y = playArea.y - playArea.height / 2 + offsetY + Math.floor(index / columns) * (cardHeight + paddingY) + cardHeight / 2;
+
+        console.log(`Card ${index} position: x=${x}, y=${y}, offsetX=${offsetX}, offsetY=${offsetY}, playArea.x=${playArea.x}, playArea.y=${playArea.y}, playArea.width=${playArea.width}, playArea.height=${playArea.height}`);
+
         return { x, y };
     }
 

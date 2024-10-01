@@ -49,6 +49,9 @@ export class UIManager {
             playAreaHeight,
             0x1e1e1e
         ).setOrigin(0.5);
+
+        console.log(`Play area: x=${playArea.x}, y=${playArea.y}, width=${playArea.width}, height=${playArea.height}`);
+
         return playArea;
     }
 

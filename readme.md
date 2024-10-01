@@ -1,8 +1,8 @@
-# Memory Card Game
+# Word Match Game
 
-This is a simple memory card game. The goal is to match all the cards in the fewest number of moves.
+This is a simple word matching game. The goal is to match all the cards in the fewest number of moves.
 
-Click on a card to reveal its symbol. Click on a second card to reveal its symbol. If the symbols match, the cards will remain face up. If the symbols do not match, the cards will be hidden again. Continue until all cards are matched.
+Click on a card to select it. Click on a second card to match it. If the words match, the cards will remain disappear. If the symbols do not match, the cards will be deselected. Continue until all cards are matched.
 
 ## Instructions
 

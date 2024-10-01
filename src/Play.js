@@ -15,20 +15,14 @@ export class Play extends Phaser.Scene {
         paddingX: 10,
         paddingY: 5,
         columns: 2,
-        rows: 5
+        rows: 5,
+        cardScale: 1 // Ensure cardScale is defined
     }
 
     constructor() {
         super({
             key: 'Play'
         });
-
-        this.cardGrid = null;
-        this.cardMatchLogic = null;
-        this.gameState = null;
-        this.uiManager = null;
-
-        this.debugManager = null;
     }
 
     init() {
@@ -122,15 +116,25 @@ export class Play extends Phaser.Scene {
         this.winnerText = this.uiManager.createGameText("YOU WIN", "#8c7ae6");
         this.gameOverText = this.uiManager.createGameText("GAME OVER\nClick to restart", "#ff0000");
 
-        const playArea = this.uiManager.createPlayArea(); // Ensure playArea is created here
+        const playArea = this.uiManager.createPlayArea();
         this.gameState.cards = this.cardGrid.createGridCards(playArea);
         console.log('Created cards:', this.gameState.cards);
 
-        this.gameState.cards.forEach(card => {
-            console.log('Card position:', card.x, card.y);
-            card.gameObject.on('pointerdown', () => {
-                this.cardMatchLogic.handleCardSelect(card);
-            });
+        if (!Array.isArray(this.gameState.cards) || this.gameState.cards.length === 0) {
+            console.error('No cards were created. Check the createGridCards method.');
+            return;
+        }
+
+        this.gameState.cards.forEach((card, index) => {
+            console.log(`Card ${index}:`, card);
+            if (card && card.gameObject) {
+                console.log(`Card ${index} position:`, card.x, card.y);
+                card.gameObject.on('pointerdown', () => {
+                    this.cardMatchLogic.handleCardSelect(card);
+                });
+            } else {
+                console.error(`Card ${index} or its gameObject is undefined.`);
+            }
         });
 
         this.time.addEvent({
@@ -140,7 +144,7 @@ export class Play extends Phaser.Scene {
             }
         });
 
-        this.uiManager.createHearts(this.gameState.lives); // Add this line to create hearts
+        this.uiManager.createHearts(this.gameState.lives);
 
         this.setupGameEvents();
     }
