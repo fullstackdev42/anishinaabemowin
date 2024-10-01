@@ -83,6 +83,9 @@ export class Play extends Phaser.Scene {
 
         // Store the playArea for later use
         this.playArea = playArea;
+
+        // Start the game
+        this.startGame();
     }
 
     restartGame() {

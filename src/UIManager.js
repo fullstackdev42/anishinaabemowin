@@ -45,18 +45,18 @@ export class UIManager {
         const playAreaHeight = this.scene.sys.game.config.height - UIManager.HEADER_HEIGHT - UIManager.FOOTER_HEIGHT;
 
         const playArea = this.scene.add.rectangle(
-            this.scene.sys.game.config.width / 2,
+            0, // Changed from this.scene.sys.game.config.width / 2 to 0
             playAreaYPosition + playAreaHeight / 2,
             this.scene.sys.game.config.width,
             playAreaHeight,
             0x1e1e1e
-        ).setOrigin(0.5);
+        ).setOrigin(0, 0.5); // Changed from 0.5 to 0, 0.5 to align left
 
         if (this.debugMode) {
             this.debugGraphics = this.scene.add.graphics();
             this.debugGraphics.lineStyle(2, 0xff0000, 1);
             this.debugGraphics.strokeRect(
-                playArea.x - playArea.width / 2,
+                playArea.x,
                 playArea.y - playArea.height / 2,
                 playArea.width,
                 playArea.height
