@@ -14,12 +14,12 @@ export class CardGrid {
     calculateGridDimensions() {
         const cardWidth = CARD_WIDTH * CARD_SCALE;
         const cardHeight = CARD_HEIGHT * CARD_SCALE;
-        const spacingX = 10;
-        const spacingY = 10;
-    
+        const spacingX = this.config.paddingX;
+        const spacingY = this.config.paddingY;
+
         const gridWidth = (this.config.columns * cardWidth) + ((this.config.columns - 1) * spacingX);
         const gridHeight = (this.config.rows * cardHeight) + ((this.config.rows - 1) * spacingY);
-    
+
         return { gridWidth, gridHeight, cardWidth, cardHeight, spacingX, spacingY };
     }
 
@@ -37,8 +37,8 @@ export class CardGrid {
     calculateCardPosition(row, col, scaledCardWidth, scaledCardHeight) {
         const startX = this.config.x;
         const startY = this.config.y;
-        const x = startX + col * (scaledCardWidth + this.config.paddingX) + scaledCardWidth / 2;
-        const y = startY + row * (scaledCardHeight + this.config.paddingY) + scaledCardHeight / 2;
+        const x = startX + col * (scaledCardWidth + this.config.paddingX);
+        const y = startY + row * (scaledCardHeight + this.config.paddingY);
         return { x, y };
     }
 
