@@ -9,18 +9,20 @@ export class UIManager {
     static HEART_MARGIN_LEFT = 140;
     static HEART_SPACE_BETWEEN = 30;
 
-    constructor(scene) {
+    constructor(scene, debugMode = false) {
         this.scene = scene;
         this.hearts = [];
+        this.debugMode = debugMode;
+        this.debugGraphics = null;
     }
 
     createHeader() {
         const headerYPosition = UIManager.HEADER_HEIGHT / 2;
         const header = this.scene.add.rectangle(
             this.scene.sys.game.config.width / 2,
-            headerYPosition, // Use calculated Y position
+            headerYPosition,
             this.scene.sys.game.config.width,
-            UIManager.HEADER_HEIGHT, // Use constant for height
+            UIManager.HEADER_HEIGHT,
             0x000000
         ).setOrigin(0.5);
         return header;
@@ -30,25 +32,36 @@ export class UIManager {
         const footerYPosition = this.scene.sys.game.config.height - UIManager.FOOTER_HEIGHT / 2;
         const footer = this.scene.add.rectangle(
             this.scene.sys.game.config.width / 2,
-            footerYPosition, // Use calculated Y position
+            footerYPosition,
             this.scene.sys.game.config.width,
-            UIManager.FOOTER_HEIGHT, // Use constant for height
+            UIManager.FOOTER_HEIGHT,
             0x000000
         ).setOrigin(0.5);
         return footer;
     }
     
     createPlayArea() {
-        const playAreaYPosition = UIManager.HEADER_HEIGHT; // Start play area where header ends
-        const playAreaHeight = this.scene.sys.game.config.height - UIManager.HEADER_HEIGHT - UIManager.FOOTER_HEIGHT; // Adjust play area height to account for header and footer
+        const playAreaYPosition = UIManager.HEADER_HEIGHT;
+        const playAreaHeight = this.scene.sys.game.config.height - UIManager.HEADER_HEIGHT - UIManager.FOOTER_HEIGHT;
 
         const playArea = this.scene.add.rectangle(
             this.scene.sys.game.config.width / 2,
-            playAreaYPosition + playAreaHeight / 2, // Center play area vertically
+            playAreaYPosition + playAreaHeight / 2,
             this.scene.sys.game.config.width,
             playAreaHeight,
             0x1e1e1e
         ).setOrigin(0.5);
+
+        if (this.debugMode) {
+            this.debugGraphics = this.scene.add.graphics();
+            this.debugGraphics.lineStyle(2, 0xff0000, 1);
+            this.debugGraphics.strokeRect(
+                playArea.x - playArea.width / 2,
+                playArea.y - playArea.height / 2,
+                playArea.width,
+                playArea.height
+            );
+        }
 
         console.log(`Play area: x=${playArea.x}, y=${playArea.y}, width=${playArea.width}, height=${playArea.height}`);
 
@@ -64,18 +77,18 @@ export class UIManager {
 
     createHearts(lives) {
         const header = this.createHeader();
-        const heartYPosition = header.y; // Center hearts vertically within the header
+        const heartYPosition = header.y;
 
         this.hearts = Array.from(new Array(lives)).map((el, index) => {
             const heart = this.scene.add.image(this.scene.sys.game.scale.width + 1000, heartYPosition, "heart")
-                .setScale(UIManager.HEART_SCALE); // Use constant for scale
+                .setScale(UIManager.HEART_SCALE);
 
             this.scene.add.tween({
                 targets: heart,
                 ease: Phaser.Math.Easing.Expo.InOut,
                 duration: 1000,
                 delay: 1000 + index * 200,
-                x: UIManager.HEART_MARGIN_LEFT + UIManager.HEART_SPACE_BETWEEN * index // Use constants for margin and spacing
+                x: UIManager.HEART_MARGIN_LEFT + UIManager.HEART_SPACE_BETWEEN * index
             });
             return heart;
         });
@@ -135,5 +148,11 @@ export class UIManager {
             width: playAreaWidth,
             height: playAreaHeight
         };
+    }
+
+    toggleDebugBorder() {
+        if (this.debugGraphics) {
+            this.debugGraphics.visible = !this.debugGraphics.visible;
+        }
     }
 }

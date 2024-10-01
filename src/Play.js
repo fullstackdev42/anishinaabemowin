@@ -11,12 +11,12 @@ export class Play extends Phaser.Scene {
     // Grid configuration
     gridConfiguration = {
         x: 0,
-        y: 0,  // We'll calculate this in the init method
-        paddingX: 10,
-        paddingY: 5,
+        y: 0,
+        paddingX: 5,
+        paddingY: 2,
         columns: 2,
         rows: 5,
-        cardScale: 1 // Ensure cardScale is defined
+        cardScale: 1
     }
 
     constructor() {
@@ -27,10 +27,9 @@ export class Play extends Phaser.Scene {
 
     init() {
         this.gameState = new GameState(this);
-        this.uiManager = new UIManager(this);
         this.cardGrid = new CardGrid(this, this.gridConfiguration);
+        console.log('cardGrid', this.cardGrid);
         this.cameras.main.fadeIn(500);
-        this.volumeButton();
         this.cardMatchLogic = new CardMatchLogic(this);
 
         // Calculate the vertical center position for the grid
@@ -52,36 +51,38 @@ export class Play extends Phaser.Scene {
         const scale = Math.max(scaleX, scaleY);
         background.setScale(scale);
 
+        // Initialize UIManager
+        this.uiManager = new UIManager(this, true);
+
         // Create UI elements
         this.uiManager.createHeader();
         this.uiManager.createFooter();
         const playArea = this.uiManager.createPlayArea();
 
-        const titleText = this.add.text(this.sys.game.scale.width / 2, this.sys.game.scale.height / 2,
-            "Card Matching Game\nClick to Play",
-            { align: "center", strokeThickness: 4, fontSize: 40, fontStyle: "bold", color: "#8c7ae6" }
-        )
-            .setOrigin(.5)
-            .setDepth(3)
-            .setInteractive();
+        // Add title text
+        const titleText = this.add.text(
+            this.sys.game.config.width / 2,
+            50,
+            'Word Match Game',
+            {
+                fontFamily: 'Arial',
+                fontSize: '32px',
+                color: '#ffffff',
+                align: 'center',
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5);
 
-        this.add.tween({
-            targets: titleText,
-            duration: 800,
-            ease: (value) => (value > .8),
-            alpha: 0,
-            repeat: -1,
-            yoyo: true,
-        });
-
-        setupTitleEvents(this, titleText);
+        // Call volumeButton() after UIManager is initialized
+        this.volumeButton();
 
         // Initialize game components without creating cards
-        this.cardGrid = new CardGrid(this, this.gridConfiguration);
         this.gameState = new GameState(this);
         this.cardMatchLogic = new CardMatchLogic(this);
-        this.uiManager = new UIManager(this);
         this.debugManager = new DebugManager(this);
+
+        // Store the playArea for later use
+        this.playArea = playArea;
     }
 
     restartGame() {
@@ -116,8 +117,8 @@ export class Play extends Phaser.Scene {
         this.winnerText = this.uiManager.createGameText("YOU WIN", "#8c7ae6");
         this.gameOverText = this.uiManager.createGameText("GAME OVER\nClick to restart", "#ff0000");
 
-        const playArea = this.uiManager.createPlayArea();
-        this.gameState.cards = this.cardGrid.createGridCards(playArea);
+        // Use the stored playArea instead of creating a new one
+        this.gameState.cards = this.cardGrid.createGridCards(this.playArea);
         console.log('Created cards:', this.gameState.cards);
 
         if (!Array.isArray(this.gameState.cards) || this.gameState.cards.length === 0) {

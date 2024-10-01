@@ -41,18 +41,25 @@ export class CardGrid {
     }
 
     calculateGridPosition(index, playArea, cardWidth, cardHeight) {
-        const { columns, paddingX, paddingY } = this.config;
+        const { columns, rows, paddingX, paddingY } = this.config;
 
-        const gridWidth = columns * cardWidth + (columns - 1) * paddingX;
-        const gridHeight = Math.ceil(this.config.rows) * cardHeight + (Math.ceil(this.config.rows) - 1) * paddingY;
+        // Calculate the total width and height of the grid
+        const totalWidth = columns * cardWidth + (columns - 1) * paddingX;
+        const totalHeight = rows * cardHeight + (rows - 1) * paddingY;
 
-        const offsetX = (playArea.width - gridWidth) / 2;
-        const offsetY = (playArea.height - gridHeight) / 2;
+        // Calculate the left edge of the grid
+        const startX = 0;
+        const startY = playArea.y - totalHeight / 2;
 
-        const x = playArea.x - playArea.width / 2 + offsetX + (index % columns) * (cardWidth + paddingX) + cardWidth / 2;
-        const y = playArea.y - playArea.height / 2 + offsetY + Math.floor(index / columns) * (cardHeight + paddingY) + cardHeight / 2;
+        // Calculate the column and row of the current card
+        const col = index % columns;
+        const row = Math.floor(index / columns);
 
-        console.log(`Card ${index} position: x=${x}, y=${y}, offsetX=${offsetX}, offsetY=${offsetY}, playArea.x=${playArea.x}, playArea.y=${playArea.y}, playArea.width=${playArea.width}, playArea.height=${playArea.height}`);
+        // Calculate x and y positions
+        const x = startX + col * (cardWidth + paddingX) + cardWidth / 2;
+        const y = startY + row * (cardHeight + paddingY) + cardHeight / 2;
+
+        console.log(`Card ${index} position: x=${x}, y=${y}`);
 
         return { x, y };
     }
