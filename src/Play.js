@@ -91,6 +91,15 @@ export class Play extends Phaser.Scene {
 
         // Start the game
         this.startGame();
+
+        // Initialize DebugManager
+        this.debugManager = new DebugManager(this);
+        this.debugManager.createDebugOverlay();
+
+        // Add key listener for toggling debug info
+        this.input.keyboard.on('keydown-D', () => {
+            this.debugManager.toggleVisibility();
+        });
     }
 
     restartGame() {

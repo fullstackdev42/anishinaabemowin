@@ -2,6 +2,7 @@ export class DebugManager {
     constructor(scene) {
         this.scene = scene;
         this.debugText = null;
+        this.isVisible = false;  // Add this line
     }
 
     createDebugOverlay() {
@@ -14,7 +15,7 @@ export class DebugManager {
         });
         this.debugText.setDepth(1000); // Ensure it's on top of other game objects
         this.debugText.setScrollFactor(0); // Make it stay in the same position regardless of camera movement
-        this.debugText.setVisible(true); // Ensure it's visible by default
+        this.debugText.setVisible(this.isVisible);  // Set initial visibility
     }
 
     updateDebugInfo(gameState, gridConfiguration) {
@@ -31,5 +32,13 @@ export class DebugManager {
             `Grid config: ${JSON.stringify(gridConfiguration, null, 2)}`,
             `Card positions: ${JSON.stringify(gameState.cards.map(card => ({x: card.x, y: card.y})), null, 2)}`
         ].join('\n');
+    }
+
+    // Add this new method
+    toggleVisibility() {
+        this.isVisible = !this.isVisible;
+        if (this.debugText) {
+            this.debugText.setVisible(this.isVisible);
+        }
     }
 }
