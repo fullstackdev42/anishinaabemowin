@@ -119,4 +119,18 @@ export class UIManager {
             this.showHearts(lives);
         });
     }
+
+    getPlayAreaCoordinates() {
+        const playAreaYPosition = UIManager.HEADER_HEIGHT;
+        const playAreaHeight = this.scene.sys.game.config.height - UIManager.HEADER_HEIGHT - UIManager.FOOTER_HEIGHT;
+        const playAreaXPosition = 0;
+        const playAreaWidth = this.scene.sys.game.config.width;
+
+        return {
+            x: playAreaXPosition,
+            y: playAreaYPosition,
+            width: playAreaWidth,
+            height: playAreaHeight
+        };
+    }
 }

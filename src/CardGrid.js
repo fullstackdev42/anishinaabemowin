@@ -12,9 +12,10 @@ export class CardGrid {
     createGridCards(playArea) {
         const { columns, rows } = this.config;
         const totalCards = columns * rows;
+        const playAreaCoords = this.scene.uiManager.getPlayAreaCoordinates();
 
         for (let i = 0; i < totalCards; i++) {
-            const position = this.calculateGridPosition(i);
+            const position = this.calculateGridPosition(i, playAreaCoords);
             const card = createCard({
                 scene: this.scene,
                 x: position.x,
@@ -28,10 +29,10 @@ export class CardGrid {
         return this.cards;
     }
 
-    calculateGridPosition(index) {
+    calculateGridPosition(index, playAreaCoords) {
         const { columns, cardScale, paddingX, paddingY } = this.config;
-        const x = (index % columns) * (CARD_WIDTH * cardScale + paddingX);
-        const y = Math.floor(index / columns) * (CARD_HEIGHT * cardScale + paddingY);
+        const x = playAreaCoords.x + (index % columns) * (CARD_WIDTH * cardScale + paddingX);
+        const y = playAreaCoords.y + Math.floor(index / columns) * (CARD_HEIGHT * cardScale + paddingY);
 
         return { x, y };
     }
