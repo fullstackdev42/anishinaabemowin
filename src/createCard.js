@@ -8,10 +8,8 @@ export const createCard = ({
     frontTexture,
     cardName
 }) => {
-
     let isFlipping = false;
     const rotation = { y: 0 };
-
     const backTexture = "card-back";
 
     const card = scene.add.plane(x, y, backTexture)
@@ -37,25 +35,17 @@ export const createCard = ({
                     targets: card,
                     ease: Phaser.Math.Easing.Expo.InOut,
                     tweens: [
-                        {
-                            duration: 200,
-                            scale: 1.1,
-                        },
-                        {
-                            duration: 300,
-                            scale: 1
-                        },
+                        { duration: 200, scale: 1.1 },
+                        { duration: 300, scale: 1 },
                     ]
                 })
             },
             onUpdate: () => {
-                // card.modelRotation.y = Phaser.Math.DegToRad(180) + Phaser.Math.DegToRad(rotation.y);
                 card.rotateY = 180 + rotation.y;
                 const cardRotation = Math.floor(card.rotateY) % 360;
                 if ((cardRotation >= 0 && cardRotation <= 90) || (cardRotation >= 270 && cardRotation <= 359)) {
                     card.setTexture(frontTexture);
-                }
-                else {
+                } else {
                     card.setTexture(backTexture);
                 }
             },
@@ -68,16 +58,18 @@ export const createCard = ({
         });
     }
 
-    const destroy = () => {
+    const destroy = (tweenConfig = {
+        y: card.y - 1000,
+        easing: Phaser.Math.Easing.Elastic.In,
+        duration: 500
+    }) => {
         scene.add.tween({
             targets: [card],
-            y: card.y - 1000,
-            easing: Phaser.Math.Easing.Elastic.In,
-            duration: 500,
+            ...tweenConfig,
             onComplete: () => {
                 card.destroy();
             }
-        })
+        });
     }
 
     return {
