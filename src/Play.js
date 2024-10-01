@@ -17,7 +17,7 @@ export class Play extends Phaser.Scene {
         y: 0,  // We'll calculate this in the init method
         cardScale: 0.5,
         paddingX: 10,
-        paddingY: 10,
+        paddingY: 5,
         columns: 2,
         rows: 5
     }
@@ -49,6 +49,7 @@ export class Play extends Phaser.Scene {
         this.gridConfiguration.y = (this.sys.game.config.height - gridHeight) / 2;
     
         this.debugManager = new DebugManager(this);
+        this.debugManager.createDebugOverlay();
     }
     
     create() {
@@ -79,10 +80,7 @@ export class Play extends Phaser.Scene {
         });
     
         setupTitleEvents(this, titleText);
-    
-        // Create debug overlay
-        this.debugManager.createDebugOverlay();
-    
+        
         // Initialize game components without creating cards
         this.cardGrid = new CardGrid(this, this.gridConfiguration);
         this.gameState = new GameState(this);

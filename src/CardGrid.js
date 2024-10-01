@@ -24,7 +24,7 @@ export class CardGrid {
     calculateGridPosition() {
         const { gridWidth, gridHeight } = this.calculateGridDimensions();
         this.config.x = (this.scene.sys.game.config.width - gridWidth) / 2;
-        this.config.y = (this.scene.sys.game.config.height - gridHeight) / 2;
+        this.config.y = (this.scene.sys.game.config.height / 3) - (gridHeight / 2);
     }
 
     getShuffledCardNames() {
@@ -34,7 +34,7 @@ export class CardGrid {
 
     calculateCardPosition(row, col, scaledCardWidth, scaledCardHeight) {
         const startX = this.config.x;
-        const x = startX + col * (scaledCardWidth + this.config.paddingX) + scaledCardWidth / 2;
+        const x = startX - col * (scaledCardWidth + this.config.paddingX) - scaledCardWidth / 2;
         const y = this.config.y + row * (scaledCardHeight + this.config.paddingY) + scaledCardHeight / 2;
         return { x, y };
     }

@@ -5,13 +5,15 @@ export class DebugManager {
     }
 
     createDebugOverlay() {
+        console.log('Creating debug overlay');
         this.debugText = this.scene.add.text(10, 10, '', { 
             font: '16px Courier', 
-            fill: '#00ff00',
+            fill: '#ff0000',
             backgroundColor: 'rgba(0,0,0,0.5)',
             padding: { x: 5, y: 5 }
         });
-        this.debugText.setDepth(1000);
+        this.debugText.setDepth(1000); // Ensure it's on top of other game objects
+        this.debugText.setScrollFactor(0); // Make it stay in the same position regardless of camera movement
         this.debugText.setVisible(true); // Ensure it's visible by default
     }
 
