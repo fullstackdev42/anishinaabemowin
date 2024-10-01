@@ -63,9 +63,6 @@ export class Play extends Phaser.Scene {
         this.uiManager.createHeader();
         this.uiManager.createFooter();
         const playArea = this.uiManager.createPlayArea();
-
-        // Create hearts within the header
-        this.uiManager.createHearts(this.gameState.lives);
     
         const titleText = this.add.text(this.sys.game.scale.width / 2, this.sys.game.scale.height / 2,
             "Card Matching Game\nClick to Play",
@@ -143,6 +140,8 @@ export class Play extends Phaser.Scene {
                 this.gameState.canMove = true;
             }
         });
+
+        this.uiManager.createHearts(this.gameState.lives); // Add this line to create hearts
 
         this.setupGameEvents();
     }
