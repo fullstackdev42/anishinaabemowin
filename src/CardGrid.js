@@ -4,64 +4,56 @@ import Phaser from 'phaser';
 export class CardGrid {
     constructor(scene, gridConfiguration) {
         this.scene = scene;
-        this.cards = [];
-        this.wordPairs = [
-            { english: "hello", ojibwe: "ahnii" },
-            { english: "thank you", ojibwe: "miigwech" },
-            { english: "water", ojibwe: "nibi" },
-            { english: "food", ojibwe: "miijim" },
-            { english: "friend", ojibwe: "niijii" }
-        ];
-        this.gridConfiguration = gridConfiguration;
+        this.config = gridConfiguration;
         this.CARD_WIDTH = 98;
         this.CARD_HEIGHT = 128;
-        this.TOTAL_PAIRS = this.gridConfiguration.columns * this.gridConfiguration.rows / 2;
-        this.TOTAL_CARDS = this.TOTAL_PAIRS * 2;
+        this.TOTAL_PAIRS = 5;
+        this.cards = [];
+        this.wordPairs = ["card-0", "card-1", "card-2", "card-3", "card-4", "card-5"];
     }
 
     calculateGridPosition() {
-        const scaledCardWidth = this.CARD_WIDTH * this.gridConfiguration.cardScale;
-        const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
-        const gridWidth = (scaledCardWidth * this.gridConfiguration.columns) + (this.gridConfiguration.paddingX * (this.gridConfiguration.columns - 1));
-        const gridHeight = (scaledCardHeight * this.gridConfiguration.rows) + (this.gridConfiguration.paddingY * (this.gridConfiguration.rows - 1));
+        const scaledCardWidth = this.CARD_WIDTH * this.config.cardScale;
+        const scaledCardHeight = this.CARD_HEIGHT * this.config.cardScale;
+        const gridWidth = (scaledCardWidth * this.config.columns) + (this.config.paddingX * (this.config.columns - 1));
+        const gridHeight = (scaledCardHeight * this.config.rows) + (this.config.paddingY * (this.config.rows - 1));
         
-        this.gridConfiguration.x = (this.scene.sys.game.config.width - gridWidth) / 2;
-        this.gridConfiguration.y = (this.scene.sys.game.config.height - gridHeight) / 2;
+        // Center the grid horizontally and vertically
+        this.config.x = (this.scene.sys.game.config.width - gridWidth) / 2;
+        this.config.y = (this.scene.sys.game.config.height - gridHeight) / 2;
     }
 
     createGridCards() {
         this.calculateGridPosition();
-
-        const selectedWordPairs = Phaser.Utils.Array.Shuffle([...this.wordPairs]).slice(0, this.TOTAL_PAIRS);
-        const gridWords = Phaser.Utils.Array.Shuffle([...selectedWordPairs, ...selectedWordPairs]);
-
-        const scaledCardWidth = this.CARD_WIDTH * this.gridConfiguration.cardScale;
-        const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
-
-        this.cards = gridWords.map((pair, index) => {
-            const col = index % this.gridConfiguration.columns;
-            const row = Math.floor(index / this.gridConfiguration.columns);
-            const x = this.gridConfiguration.x + (scaledCardWidth + this.gridConfiguration.paddingX) * col + scaledCardWidth / 2;
-            const y = this.gridConfiguration.y + (scaledCardHeight + this.gridConfiguration.paddingY) * row + scaledCardHeight / 2;
-
-            const isEnglish = index % 2 === 0;
-            const cardText = isEnglish ? pair.english : pair.ojibwe;
-            const cardName = `${pair.english}-${pair.ojibwe}`;
-
-            const card = createCard({
-                scene: this.scene,
-                x: x,
-                y: y,
-                cardText: cardText,
-                cardName: cardName
-            });
-
-            // Add this console.log to debug card creation
-            console.log(`Created card: ${cardName} at (${x}, ${y})`);
-
-            return card;
-        });
-
+        const cardNames = this.scene.gameState.cardNames.concat(this.scene.gameState.cardNames);
+        Phaser.Utils.Array.Shuffle(cardNames);
+    
+        const scaledCardWidth = this.CARD_WIDTH * this.config.cardScale;
+        const scaledCardHeight = this.CARD_HEIGHT * this.config.cardScale;
+        const totalWidth = (this.config.columns * scaledCardWidth) + ((this.config.columns - 1) * this.config.paddingX);
+        const startX = (this.scene.sys.game.config.width - totalWidth) / 2;
+    
+        for (let row = 0; row < this.config.rows; row++) {
+            for (let col = 0; col < this.config.columns; col++) {
+                const cardIndex = row * this.config.columns + col;
+                if (cardIndex < cardNames.length) {
+                    const x = startX + col * (scaledCardWidth + this.config.paddingX) + scaledCardWidth / 2;
+                    const y = this.config.y + row * (scaledCardHeight + this.config.paddingY) + scaledCardHeight / 2;
+    
+                    const card = createCard({
+                        scene: this.scene,
+                        x,
+                        y,
+                        cardText: cardNames[cardIndex],
+                        cardName: cardNames[cardIndex]
+                    });
+    
+                    card.gameObject.setScale(this.config.cardScale);
+                    this.cards.push(card);
+                }
+            }
+        }
+    
         return this.cards;
     }
 

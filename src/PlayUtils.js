@@ -80,6 +80,6 @@ export function setupTitleEvents(scene, titleText) {
                 }
                 scene.startGame();
             }
-        })
+        });
     });
 }

@@ -13,7 +13,7 @@ export class Play extends Phaser.Scene {
 
     // Grid configuration
     gridConfiguration = {
-        x: 100,
+        x: 0,
         y: 0,  // We'll calculate this in the init method
         cardScale: 0.5,
         paddingX: 10,
@@ -30,6 +30,7 @@ export class Play extends Phaser.Scene {
         this.cardGrid = null;
         this.cardMatchLogic = null;
         this.gameState = null;
+        this.uiManager = null;
 
         this.debugManager = null;
     }
@@ -41,18 +42,24 @@ export class Play extends Phaser.Scene {
         this.cameras.main.fadeIn(500);
         this.volumeButton();
         this.cardMatchLogic = new CardMatchLogic(this);
-
+    
         // Calculate the vertical center position for the grid
         const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
         const gridHeight = (scaledCardHeight * 2) + this.gridConfiguration.paddingY;
         this.gridConfiguration.y = (this.sys.game.config.height - gridHeight) / 2;
-
+    
         this.debugManager = new DebugManager(this);
     }
-
+    
     create() {
-        // Adjust the background image position
-        this.add.image(0, 0, "background").setOrigin(0);
+        // Center the background image
+        const background = this.add.image(this.sys.game.config.width / 2, this.sys.game.config.height / 2, "background");
+    
+        // Scale the background to cover the entire game area while maintaining aspect ratio
+        const scaleX = this.sys.game.config.width / background.width;
+        const scaleY = this.sys.game.config.height / background.height;
+        const scale = Math.max(scaleX, scaleY);
+        background.setScale(scale);
     
         const titleText = this.add.text(this.sys.game.scale.width / 2, this.sys.game.scale.height / 2,
             "Card Matching Game\nClick to Play",
@@ -76,14 +83,12 @@ export class Play extends Phaser.Scene {
         // Create debug overlay
         this.debugManager.createDebugOverlay();
     
-        // Initialize the card grid
+        // Initialize game components without creating cards
         this.cardGrid = new CardGrid(this, this.gridConfiguration);
         this.gameState = new GameState(this);
         this.cardMatchLogic = new CardMatchLogic(this);
         this.uiManager = new UIManager(this);
         this.debugManager = new DebugManager(this);
-
-        this.startGame();
     }
 
     restartGame() {
@@ -129,7 +134,7 @@ export class Play extends Phaser.Scene {
         this.hearts = this.createHearts();
         this.gameState.cards = this.cardGrid.createGridCards();
         console.log('Created cards:', this.gameState.cards);
-
+    
         this.gameState.cards.forEach(card => {
             console.log('Card position:', card.x, card.y);
             card.gameObject.on('pointerdown', () => {
