@@ -53,7 +53,7 @@ export class Play extends Phaser.Scene {
     create() {
         // Adjust the background image position
         this.add.image(0, 0, "background").setOrigin(0);
-
+    
         const titleText = this.add.text(this.sys.game.scale.width / 2, this.sys.game.scale.height / 2,
             "Card Matching Game\nClick to Play",
             { align: "center", strokeThickness: 4, fontSize: 40, fontStyle: "bold", color: "#8c7ae6" }
@@ -61,7 +61,7 @@ export class Play extends Phaser.Scene {
             .setOrigin(.5)
             .setDepth(3)
             .setInteractive();
-
+    
         this.add.tween({
             targets: titleText,
             duration: 800,
@@ -70,11 +70,20 @@ export class Play extends Phaser.Scene {
             repeat: -1,
             yoyo: true,
         });
-
+    
         setupTitleEvents(this, titleText);
-
+    
         // Create debug overlay
         this.debugManager.createDebugOverlay();
+    
+        // Initialize the card grid
+        this.cardGrid = new CardGrid(this, this.gridConfiguration);
+        this.gameState = new GameState(this);
+        this.cardMatchLogic = new CardMatchLogic(this);
+        this.uiManager = new UIManager(this);
+        this.debugManager = new DebugManager(this);
+
+        this.startGame();
     }
 
     restartGame() {
@@ -118,7 +127,15 @@ export class Play extends Phaser.Scene {
         this.gameOverText = this.uiManager.createGameText("GAME OVER\nClick to restart", "#ff0000");
     
         this.hearts = this.createHearts();
-        this.gameState.cards = this.createGridCards();
+        this.gameState.cards = this.cardGrid.createGridCards();
+        console.log('Created cards:', this.gameState.cards);
+
+        this.gameState.cards.forEach(card => {
+            console.log('Card position:', card.x, card.y);
+            card.gameObject.on('pointerdown', () => {
+                this.cardMatchLogic.handleCardSelect(card);
+            });
+        });
     
         this.time.addEvent({
             delay: 200 * this.gameState.cards.length,

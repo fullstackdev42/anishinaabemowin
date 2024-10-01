@@ -26,7 +26,8 @@ export class DebugManager {
             `Cards remaining: ${gameState.cards.length}`,
             `Lives: ${gameState.lives}`,
             `Can move: ${gameState.canMove}`,
-            `Grid config: ${JSON.stringify(gridConfiguration, null, 2)}`
+            `Grid config: ${JSON.stringify(gridConfiguration, null, 2)}`,
+            `Card positions: ${JSON.stringify(gameState.cards.map(card => ({x: card.x, y: card.y})), null, 2)}`
         ].join('\n');
     }
 }

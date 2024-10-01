@@ -6,19 +6,22 @@ export class CardMatchLogic {
 
     handleCardSelect(card) {
         if (!this.scene.canMove) return;
-
+    
         if (this.selectedCard === undefined) {
             this.selectedCard = card;
-            card.gameObject.setTint(0x00ff00);
+            card.gameObject.first.setStrokeStyle(2, 0x00ff00);
         } else {
             if (this.selectedCard === card) {
-                card.gameObject.clearTint();
+                card.gameObject.first.setStrokeStyle(2, 0x000000);
                 this.selectedCard = undefined;
             } else {
                 this.scene.canMove = false;
-                card.gameObject.setTint(0x00ff00);
-
-                if (this.selectedCard.cardName === card.cardName) {
+                card.gameObject.first.setStrokeStyle(2, 0x00ff00);
+    
+                const [selectedEnglish, selectedOjibwe] = this.selectedCard.cardName.split('-');
+                const [currentEnglish, currentOjibwe] = card.cardName.split('-');
+    
+                if (selectedEnglish === currentEnglish && selectedOjibwe === currentOjibwe) {
                     this.handleMatch(this.selectedCard, card);
                 } else {
                     this.handleMismatch(this.selectedCard, card);

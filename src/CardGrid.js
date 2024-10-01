@@ -5,7 +5,13 @@ export class CardGrid {
     constructor(scene, gridConfiguration) {
         this.scene = scene;
         this.cards = [];
-        this.cardNames = ["card-0", "card-1", "card-2", "card-3", "card-4", "card-5"];
+        this.wordPairs = [
+            { english: "hello", ojibwe: "ahnii" },
+            { english: "thank you", ojibwe: "miigwech" },
+            { english: "water", ojibwe: "nibi" },
+            { english: "food", ojibwe: "miijim" },
+            { english: "friend", ojibwe: "niijii" }
+        ];
         this.gridConfiguration = gridConfiguration;
         this.CARD_WIDTH = 98;
         this.CARD_HEIGHT = 128;
@@ -26,33 +32,32 @@ export class CardGrid {
     createGridCards() {
         this.calculateGridPosition();
 
-        const selectedCardNames = Phaser.Utils.Array.Shuffle([...this.cardNames]).slice(0, this.TOTAL_PAIRS);
-        const gridCardNames = Phaser.Utils.Array.Shuffle([...selectedCardNames, ...selectedCardNames]);
+        const selectedWordPairs = Phaser.Utils.Array.Shuffle([...this.wordPairs]).slice(0, this.TOTAL_PAIRS);
+        const gridWords = Phaser.Utils.Array.Shuffle([...selectedWordPairs, ...selectedWordPairs]);
 
         const scaledCardWidth = this.CARD_WIDTH * this.gridConfiguration.cardScale;
         const scaledCardHeight = this.CARD_HEIGHT * this.gridConfiguration.cardScale;
 
-        this.cards = gridCardNames.map((name, index) => {
+        this.cards = gridWords.map((pair, index) => {
             const col = index % this.gridConfiguration.columns;
             const row = Math.floor(index / this.gridConfiguration.columns);
-            const x = this.gridConfiguration.x + (scaledCardWidth + this.gridConfiguration.paddingX) * col;
-            const y = this.gridConfiguration.y + (scaledCardHeight + this.gridConfiguration.paddingY) * row;
+            const x = this.gridConfiguration.x + (scaledCardWidth + this.gridConfiguration.paddingX) * col + scaledCardWidth / 2;
+            const y = this.gridConfiguration.y + (scaledCardHeight + this.gridConfiguration.paddingY) * row + scaledCardHeight / 2;
+
+            const isEnglish = index % 2 === 0;
+            const cardText = isEnglish ? pair.english : pair.ojibwe;
+            const cardName = `${pair.english}-${pair.ojibwe}`;
 
             const card = createCard({
                 scene: this.scene,
                 x: x,
-                y: -1000,
-                frontTexture: name,
-                cardName: name
+                y: y,
+                cardText: cardText,
+                cardName: cardName
             });
 
-            this.scene.add.tween({
-                targets: card.gameObject,
-                duration: 800,
-                delay: index * 100,
-                onStart: () => this.scene.sound.play("card-slide", { volume: 1.2 }),
-                y: y
-            });
+            // Add this console.log to debug card creation
+            console.log(`Created card: ${cardName} at (${x}, ${y})`);
 
             return card;
         });
