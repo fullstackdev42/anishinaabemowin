@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { CARD_WIDTH, CARD_HEIGHT, CARD_SCALE } from './constants';
 
 export const createCard = ({
     scene,
@@ -7,7 +8,8 @@ export const createCard = ({
     cardText,
     cardName
 }) => {
-    const cardBackground = scene.add.rectangle(x, y, 98, 128, 0xffffff)
+    // Change the rectangle dimensions from 98x128 to 128x98
+    const cardBackground = scene.add.rectangle(x, y, CARD_WIDTH, CARD_HEIGHT, 0xffffff)
         .setStrokeStyle(2, 0x000000)
         .setOrigin(0.5);
 
@@ -16,13 +18,13 @@ export const createCard = ({
         fontSize: '16px',
         color: '#000000',
         align: 'center',
-        wordWrap: { width: 90 }
+        wordWrap: { width: CARD_WIDTH - 8 } // Adjust word wrap width for landscape orientation
     }).setOrigin(0.5);
 
     const container = scene.add.container(x, y, [cardBackground, text]);
-    container.setSize(98, 128);
+    container.setSize(CARD_WIDTH, CARD_HEIGHT);
     container.setInteractive();
-    container.setScale(0.5);
+    container.setScale(CARD_SCALE);
 
     container.setVisible(true);
 

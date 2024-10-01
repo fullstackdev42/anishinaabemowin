@@ -1,4 +1,5 @@
 import { createCard } from './createCard';
+import { CARD_WIDTH, CARD_HEIGHT, CARD_SCALE } from './constants';
 import Phaser from 'phaser';
 
 export class CardGrid {
@@ -11,14 +12,15 @@ export class CardGrid {
     }
 
     calculateGridDimensions() {
-        const scaledCardWidth = this.CARD_WIDTH * this.config.cardScale;
-        const scaledCardHeight = this.CARD_HEIGHT * this.config.cardScale;
-        return {
-            gridWidth: (scaledCardWidth * this.config.columns) + (this.config.paddingX * (this.config.columns - 1)),
-            gridHeight: (scaledCardHeight * this.config.rows) + (this.config.paddingY * (this.config.rows - 1)),
-            scaledCardWidth,
-            scaledCardHeight
-        };
+        const cardWidth = CARD_WIDTH * CARD_SCALE;
+        const cardHeight = CARD_HEIGHT * CARD_SCALE;
+        const spacingX = 10;
+        const spacingY = 10;
+    
+        const gridWidth = (this.config.columns * cardWidth) + ((this.config.columns - 1) * spacingX);
+        const gridHeight = (this.config.rows * cardHeight) + ((this.config.rows - 1) * spacingY);
+    
+        return { gridWidth, gridHeight, cardWidth, cardHeight, spacingX, spacingY };
     }
 
     calculateGridPosition() {
@@ -34,8 +36,9 @@ export class CardGrid {
 
     calculateCardPosition(row, col, scaledCardWidth, scaledCardHeight) {
         const startX = this.config.x;
-        const x = startX - col * (scaledCardWidth + this.config.paddingX) - scaledCardWidth / 2;
-        const y = this.config.y + row * (scaledCardHeight + this.config.paddingY) + scaledCardHeight / 2;
+        const startY = this.config.y;
+        const x = startX + col * (scaledCardWidth + this.config.paddingX) + scaledCardWidth / 2;
+        const y = startY + row * (scaledCardHeight + this.config.paddingY) + scaledCardHeight / 2;
         return { x, y };
     }
 
@@ -54,7 +57,9 @@ export class CardGrid {
     createGridCards() {
         this.calculateGridPosition();
         const cardNames = this.getShuffledCardNames();
-        const { scaledCardWidth, scaledCardHeight } = this.calculateGridDimensions();
+        const { cardWidth, cardHeight } = this.calculateGridDimensions();
+        const scaledCardWidth = cardWidth * this.config.cardScale;
+        const scaledCardHeight = cardHeight * this.config.cardScale;
 
         for (let row = 0; row < this.config.rows; row++) {
             for (let col = 0; col < this.config.columns; col++) {
