@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CARD_WIDTH, CARD_HEIGHT, CARD_SCALE } from './constants';
+import { CARD_WIDTH, CARD_HEIGHT } from './constants';
 
 export const createCard = ({
     scene,
@@ -24,7 +24,6 @@ export const createCard = ({
     const container = scene.add.container(x, y, [cardBackground, text]);
     container.setSize(CARD_WIDTH, CARD_HEIGHT);
     container.setInteractive();
-    container.setScale(CARD_SCALE);
 
     container.setVisible(true);
 

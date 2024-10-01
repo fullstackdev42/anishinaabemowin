@@ -5,14 +5,13 @@ import { CardGrid } from './CardGrid';
 import { CardMatchLogic } from './CardMatchLogic';
 import { GameState } from './GameState';
 import { DebugManager } from './DebugManager';
-import { CARD_WIDTH, CARD_HEIGHT, CARD_SCALE } from './constants';
+import { CARD_WIDTH, CARD_HEIGHT } from './constants';
 
 export class Play extends Phaser.Scene {
     // Grid configuration
     gridConfiguration = {
         x: 0,
         y: 0,  // We'll calculate this in the init method
-        cardScale: CARD_SCALE,
         paddingX: 10,
         paddingY: 5,
         columns: 2,

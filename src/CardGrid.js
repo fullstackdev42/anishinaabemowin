@@ -1,5 +1,5 @@
 import { createCard } from './createCard';
-import { CARD_WIDTH, CARD_HEIGHT, CARD_SCALE } from './constants';
+import { CARD_WIDTH, CARD_HEIGHT } from './constants';
 import Phaser from 'phaser';
 
 export class CardGrid {
@@ -13,6 +13,8 @@ export class CardGrid {
         const { columns, rows } = this.config;
         const totalCards = columns * rows;
         const playAreaCoords = this.scene.uiManager.getPlayAreaCoordinates();
+
+        console.log(playAreaCoords);
 
         for (let i = 0; i < totalCards; i++) {
             const position = this.calculateGridPosition(i, playAreaCoords);
@@ -30,10 +32,19 @@ export class CardGrid {
     }
 
     calculateGridPosition(index, playAreaCoords) {
-        const { columns, cardScale, paddingX, paddingY } = this.config;
-        const x = playAreaCoords.x + (index % columns) * (CARD_WIDTH * cardScale + paddingX);
-        const y = playAreaCoords.y + Math.floor(index / columns) * (CARD_HEIGHT * cardScale + paddingY);
-
+        const { columns, paddingX, paddingY } = this.config;
+        const cardWidth = CARD_WIDTH;
+        const cardHeight = CARD_HEIGHT;
+    
+        const gridWidth = columns * cardWidth + (columns - 1) * paddingX;
+        const gridHeight = Math.ceil(index / columns) * cardHeight + (Math.ceil(index / columns) - 1) * paddingY;
+    
+        const offsetX = (playAreaCoords.width - gridWidth) / 2;
+        const offsetY = (playAreaCoords.height - gridHeight) / 2;
+    
+        const x = playAreaCoords.x + offsetX + (index % columns) * (cardWidth + paddingX);
+        const y = playAreaCoords.y + offsetY + Math.floor(index / columns) * (cardHeight + paddingY);
+    
         return { x, y };
     }
 
