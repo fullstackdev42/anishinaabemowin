@@ -62,7 +62,7 @@ export class Play extends Phaser.Scene {
         // Create UI elements
         this.uiManager.createHeader();
         this.uiManager.createFooter();
-        this.uiManager.createPlayArea();
+        const playArea = this.uiManager.createPlayArea();
 
         // Create hearts within the header
         this.uiManager.createHearts(this.gameState.lives);
@@ -89,6 +89,7 @@ export class Play extends Phaser.Scene {
         // Initialize game components without creating cards
         this.cardGrid = new CardGrid(this, this.gridConfiguration);
         this.gameState = new GameState(this);
+        this.cardGrid.createGridCards(playArea);
         this.cardMatchLogic = new CardMatchLogic(this);
         this.uiManager = new UIManager(this);
         this.debugManager = new DebugManager(this);

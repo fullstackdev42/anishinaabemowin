@@ -23,10 +23,10 @@ export class CardGrid {
         return { gridWidth, gridHeight, cardWidth, cardHeight, spacingX, spacingY };
     }
 
-    calculateGridPosition() {
+    calculateGridPosition(playArea) {
         const { gridWidth, gridHeight } = this.calculateGridDimensions();
-        this.config.x = (this.scene.sys.game.config.width - gridWidth) / 2;
-        this.config.y = (this.scene.sys.game.config.height / 3) - (gridHeight / 2);
+        this.config.x = playArea.x - gridWidth / 2;
+        this.config.y = playArea.y - gridHeight / 2;
     }
 
     getShuffledCardNames() {
@@ -54,13 +54,13 @@ export class CardGrid {
         return card;
     }
 
-    createGridCards() {
-        this.calculateGridPosition();
+    createGridCards(playArea) {
+        this.calculateGridPosition(playArea);
         const cardNames = this.getShuffledCardNames();
         const { cardWidth, cardHeight } = this.calculateGridDimensions();
         const scaledCardWidth = cardWidth * this.config.cardScale;
         const scaledCardHeight = cardHeight * this.config.cardScale;
-
+    
         for (let row = 0; row < this.config.rows; row++) {
             for (let col = 0; col < this.config.columns; col++) {
                 const cardIndex = row * this.config.columns + col;
@@ -71,7 +71,7 @@ export class CardGrid {
                 }
             }
         }
-
+    
         return this.cards;
     }
 
