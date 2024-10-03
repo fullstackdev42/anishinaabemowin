@@ -33,20 +33,35 @@ export class Play extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        // Start the game
-        this.startGame();
+        // Ensure all resources are loaded before starting the game
+        this.load.once('complete', () => {
+            this.startGame();
+        });
+        this.load.start();
     }
 
     startGame() {
-        // Create the card data array
-        const cardData = this.gameState.wordPairs.flatMap(pair => [
-            { text: pair.english, name: `${pair.english}-${pair.ojibwe}`, isEnglish: true },
-            { text: pair.ojibwe, name: `${pair.english}-${pair.ojibwe}`, isEnglish: false }
-        ]);
-        
-        // Shuffle the card data
-        Phaser.Utils.Array.Shuffle(cardData);
+        console.log('Starting game with word pairs:', this.gameState.wordPairs);
+        // Create the card data array, ensuring English cards come first
+        const englishCards = this.gameState.wordPairs.map(pair => ({
+            text: pair.english,
+            name: `${pair.english}-${pair.ojibwe}`,
+            isEnglish: true
+        }));
+        const ojibweCards = this.gameState.wordPairs.map(pair => ({
+            text: pair.ojibwe,
+            name: `${pair.english}-${pair.ojibwe}`,
+            isEnglish: false
+        }));
 
+        // Shuffle English and Ojibwe cards separately
+        Phaser.Utils.Array.Shuffle(englishCards);
+        Phaser.Utils.Array.Shuffle(ojibweCards);
+
+        // Combine the shuffled English and Ojibwe cards
+        const cardData = [...englishCards, ...ojibweCards];
+
+        console.log('Creating grid with card data:', cardData);
         // Create the grid of cards using RexUI GridSizer
         this.createCardGrid(cardData);
 
@@ -56,22 +71,23 @@ export class Play extends Phaser.Scene {
 
     createCardGrid(cardData) {
         const padding = 20;
-        const titleHeight = 100; // Adjust this value based on your title's actual height
-        const gridWidth = this.sys.game.config.width - (padding * 2);
-        const gridHeight = this.sys.game.config.height - (padding * 2) - titleHeight;
+        const titleHeight = 100;
+        const availableWidth = this.sys.game.config.width - (padding * 2);
+        const availableHeight = this.sys.game.config.height - (padding * 2) - titleHeight;
         
         const columns = 2;
-        const rows = 5;
+        const englishCards = cardData.filter(card => card.isEnglish);
+        const ojibweCards = cardData.filter(card => !card.isEnglish);
+        const rows = Math.max(englishCards.length, ojibweCards.length);
 
-        // Calculate card dimensions based on available space
-        const cardWidth = (gridWidth - (columns - 1) * 10) / columns;
-        const cardHeight = (gridHeight - (rows - 1) * 10) / rows;
+        const cardWidth = (availableWidth - (columns - 1) * 10) / columns;
+        const cardHeight = Math.min((availableHeight - (rows - 1) * 10) / rows, 100); // Cap card height
 
         const gridSizer = this.rexUI.add.gridSizer({
             x: this.sys.game.config.width / 2,
             y: (this.sys.game.config.height + titleHeight) / 2,
-            width: gridWidth,
-            height: gridHeight,
+            width: availableWidth,
+            height: rows * (cardHeight + 10) - 10,
             column: columns,
             row: rows,
             columnProportions: 1,
@@ -83,14 +99,16 @@ export class Play extends Phaser.Scene {
             }
         });
 
-        this.gameState.cards = cardData.map((data, index) => {
+        englishCards.forEach((data, index) => {
             const card = this.createCard(data, cardWidth, cardHeight);
-            const col = index % 2;
-            const row = Math.floor(index / 2);
-            gridSizer.add(card.gameObject, { column: col, row: row, align: 'center' });
-            
+            gridSizer.add(card.gameObject, { column: 0, row: index, align: 'center' });
             card.gameObject.on('pointerdown', () => this.handleCardClick(card));
-            return card;
+        });
+
+        ojibweCards.forEach((data, index) => {
+            const card = this.createCard(data, cardWidth, cardHeight);
+            gridSizer.add(card.gameObject, { column: 1, row: index, align: 'center' });
+            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
         });
 
         gridSizer.layout();

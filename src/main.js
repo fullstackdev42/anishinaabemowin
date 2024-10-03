@@ -6,8 +6,8 @@ import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 const config = {
     title: 'Word Matching Game',
     type: Phaser.AUTO,
-    width: 549,
-    height: 480,
+    width: 800,
+    height: 600,
     parent: 'game-container',
     backgroundColor: '#192a56',
     pixelArt: true,
