@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { CardMatchLogic } from './CardMatchLogic';
 import { GameState } from './GameState';
+import { GridManager } from './GridManager';
+import { UIManager } from './UIManager';
 
 export class Play extends Phaser.Scene {
     constructor() {
@@ -11,13 +12,16 @@ export class Play extends Phaser.Scene {
 
     init() {
         this.gameState = new GameState(this);
-        this.cardMatchLogic = new CardMatchLogic(this);
+        this.gridManager = new GridManager(this);
+        this.uiManager = new UIManager(this);
         this.cameras.main.fadeIn(500);
+        this.selectedEnglishCard = null;
+        this.selectedOjibweCard = null;
     }
 
     create() {
-        this.createBackground();
-        this.createTitleText();
+        this.uiManager.createBackground();
+        this.uiManager.createTitleText();
         this.load.once('complete', () => {
             this.startGame();
         });
@@ -47,7 +51,7 @@ export class Play extends Phaser.Scene {
         console.log('Starting game with word pairs:', this.gameState.wordPairs);
         const cardData = this.createCardData();
         console.log('Creating grid with card data:', cardData);
-        this.createCardGrid(cardData);
+        this.gridManager.createCardGrid(cardData);
         this.gameState.canMove = true;
     }
 
@@ -69,77 +73,50 @@ export class Play extends Phaser.Scene {
         return [...englishCards, ...ojibweCards];
     }
 
-    createCardGrid(cardData) {
-        const padding = 20;
-        const titleHeight = 100;
-        const availableWidth = this.sys.game.config.width - (padding * 2);
-        const availableHeight = this.sys.game.config.height - (padding * 2) - titleHeight;
-        
-        const columns = 2;
-        const englishCards = cardData.filter(card => card.isEnglish);
-        const ojibweCards = cardData.filter(card => !card.isEnglish);
-        const rows = Math.max(englishCards.length, ojibweCards.length);
-
-        const cardWidth = (availableWidth - (columns - 1) * 10) / columns;
-        const cardHeight = Math.min((availableHeight - (rows - 1) * 10) / rows, 100);
-
-        const gridSizer = this.rexUI.add.gridSizer({
-            x: this.sys.game.config.width / 2,
-            y: (this.sys.game.config.height + titleHeight) / 2,
-            width: availableWidth,
-            height: rows * (cardHeight + 10) - 10,
-            column: columns,
-            row: rows,
-            columnProportions: 1,
-            rowProportions: 1,
-            space: {
-                left: padding, right: padding, top: padding, bottom: padding,
-                column: 10,
-                row: 10,
-            }
-        });
-
-        this.addCardsToGrid(gridSizer, englishCards, 0, cardWidth, cardHeight);
-        this.addCardsToGrid(gridSizer, ojibweCards, 1, cardWidth, cardHeight);
-
-        gridSizer.layout();
-    }
-
-    addCardsToGrid(gridSizer, cards, column, cardWidth, cardHeight) {
-        cards.forEach((data, index) => {
-            const card = this.createCard(data, cardWidth, cardHeight);
-            gridSizer.add(card.gameObject, { column, row: index, align: 'center' });
-            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
-        });
-    }
-
-    createCard(data, cardWidth, cardHeight) {
-        const cardContainer = this.add.container(0, 0);
-        const cardBackground = this.add.rectangle(0, 0, cardWidth, cardHeight, 0xffffff);
-        const cardText = this.add.text(0, 0, data.text, {
-            fontFamily: 'Arial',
-            fontSize: '16px',
-            color: '#000000',
-            align: 'center',
-            wordWrap: { width: cardWidth - 10 }
-        }).setOrigin(0.5);
-
-        cardContainer.add([cardBackground, cardText]);
-        cardContainer.setSize(cardWidth, cardHeight);
-        cardContainer.setInteractive();
-
-        return {
-            gameObject: cardContainer,
-            data: data,
-            revealed: false,
-            hasFaceAt: (x, y) => cardContainer.getBounds().contains(x, y)
-        };
-    }
-
     handleCardClick(card) {
-        if (this.gameState.canMove) {
-            this.cardMatchLogic.handleCardSelect(card);
+        if (!this.gameState.canMove) return;
+
+        if (card.data.isEnglish) {
+            if (this.selectedEnglishCard) {
+                this.selectedEnglishCard.setSelected(false);
+            }
+            this.selectedEnglishCard = card;
+        } else {
+            if (this.selectedOjibweCard) {
+                this.selectedOjibweCard.setSelected(false);
+            }
+            this.selectedOjibweCard = card;
         }
+
+        card.setSelected(true);
+
+        if (this.selectedEnglishCard && this.selectedOjibweCard) {
+            this.checkForMatch();
+        }
+    }
+
+    handleCorrectMatch() {
+        const fadeOutDuration = 500;
+        this.selectedEnglishCard.fadeOut(fadeOutDuration, () => {
+            this.selectedEnglishCard.destroy();
+            this.gameState.removeCard(this.selectedEnglishCard);
+            this.selectedEnglishCard = null;
+        });
+        this.selectedOjibweCard.fadeOut(fadeOutDuration, () => {
+            this.selectedOjibweCard.destroy();
+            this.gameState.removeCard(this.selectedOjibweCard);
+            this.selectedOjibweCard = null;
+            this.checkGameStatus();
+        });
+    }
+
+    handleIncorrectMatch() {
+        this.time.delayedCall(500, () => {
+            this.selectedEnglishCard.setSelected(false);
+            this.selectedOjibweCard.setSelected(false);
+            this.selectedEnglishCard = null;
+            this.selectedOjibweCard = null;
+        });
     }
 
     restartGame() {
@@ -169,42 +146,20 @@ export class Play extends Phaser.Scene {
     checkGameStatus() {
         const status = this.gameState.checkGameStatus();
         if (status === 'gameOver') {
-            this.showGameOverText();
+            this.uiManager.showGameOverText();
+            this.gameState.canMove = false;
         } else if (status === 'win') {
-            this.showWinnerText();
+            this.uiManager.showWinnerText();
+            this.gameState.canMove = false;
         }
     }
 
-    showGameOverText() {
-        this.showAnimatedText('Game Over');
+    checkForMatch() {
+        if (this.selectedEnglishCard.data.name === this.selectedOjibweCard.data.name) {
+            this.handleCorrectMatch();
+        } else {
+            this.handleIncorrectMatch();
+        }
         this.gameState.canMove = false;
-    }
-
-    showWinnerText() {
-        this.sound.play("victory");
-        this.showAnimatedText('You Win!');
-        this.gameState.canMove = false;
-    }
-
-    showAnimatedText(text) {
-        const animatedText = this.add.text(
-            this.sys.game.config.width / 2,
-            this.sys.game.config.height / 2,
-            text,
-            {
-                fontFamily: 'Arial',
-                fontSize: '64px',
-                color: '#ffffff',
-                align: 'center',
-                fontStyle: 'bold'
-            }
-        ).setOrigin(0.5).setAlpha(0);
-
-        this.tweens.add({
-            targets: animatedText,
-            alpha: 1,
-            duration: 1000,
-            ease: 'Power2'
-        });
     }
 }

@@ -1,38 +1,39 @@
 export class GameState {
     constructor(scene) {
         this.scene = scene;
-        this.wordPairs = [
-            { english: "apple", ojibwe: "mishiimin" },
+        this.wordPairs = this.generateWordPairs();
+        this.cards = [];
+        this.canMove = true;
+    }
+
+    generateWordPairs() {
+        // Generate or fetch word pairs
+        return [
+            { english: 'Hello', ojibwe: 'Aaniin' },
+            { english: 'Thank you', ojibwe: 'Miigwech' },
             { english: "dog", ojibwe: "animosh" },
             { english: "water", ojibwe: "biish" },
             { english: "sun", ojibwe: "giizis" },
-            { english: "tree", ojibwe: "mitig" }
         ];
-        this.cards = [];
-        this.cardOpened = undefined;
-        this.canMove = false;
-        this.lives = 10;
-        this.TOTAL_PAIRS = this.wordPairs.length;
-        this.TOTAL_CARDS = this.TOTAL_PAIRS * 2;
     }
 
     resetState() {
-        this.cardOpened = undefined;
         this.cards = [];
-        this.canMove = false;
-        this.lives = 10;
-    }
-
-    removeLife() {
-        this.lives -= 1;
+        this.canMove = true;
     }
 
     checkGameStatus() {
-        if (this.lives === 0) {
-            return 'gameOver';
-        } else if (this.cards.length === 0) {
+        if (this.cards.length === 0) {
             return 'win';
         }
-        return 'ongoing';
+        return 'playing';
+    }
+
+    addCard(card) {
+        this.cards.push(card);
+    }
+
+    removeCard(card) {
+        this.cards = this.cards.filter(c => c !== card);
     }
 }
