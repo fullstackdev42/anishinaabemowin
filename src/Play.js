@@ -20,12 +20,11 @@ export class Play extends Phaser.Scene {
         // Center the background image
         const background = this.add.image(this.sys.game.config.width / 2, this.sys.game.config.height / 2, "background");
 
-
         // Add title text
         const titleText = this.add.text(
             this.sys.game.config.width / 2,
             50,
-            'Word Match Game',
+            'Word Match',
             {
                 fontFamily: 'Arial',
                 fontSize: '32px',
@@ -41,9 +40,9 @@ export class Play extends Phaser.Scene {
 
     startGame() {
         // Create the card data array
-        const cardData = this.gameState.cardNames.flatMap(name => [
-            { text: name, name: name },
-            { text: name, name: name }
+        const cardData = this.gameState.wordPairs.flatMap(pair => [
+            { text: pair.english, name: `${pair.english}-${pair.ojibwe}`, isEnglish: true },
+            { text: pair.ojibwe, name: `${pair.english}-${pair.ojibwe}`, isEnglish: false }
         ]);
         
         // Shuffle the card data

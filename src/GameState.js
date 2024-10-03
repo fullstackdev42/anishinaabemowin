@@ -1,12 +1,18 @@
 export class GameState {
     constructor(scene) {
         this.scene = scene;
-        this.cardNames = ["card-0", "card-1", "card-2", "card-3", "card-4"];
+        this.wordPairs = [
+            { english: "apple", ojibwe: "mishiimin" },
+            { english: "dog", ojibwe: "animosh" },
+            { english: "water", ojibwe: "nibi" },
+            { english: "sun", ojibwe: "giizis" },
+            { english: "tree", ojibwe: "mitig" }
+        ];
         this.cards = [];
         this.cardOpened = undefined;
         this.canMove = false;
         this.lives = 10;
-        this.TOTAL_PAIRS = 5;
+        this.TOTAL_PAIRS = this.wordPairs.length;
         this.TOTAL_CARDS = this.TOTAL_PAIRS * 2;
     }
 

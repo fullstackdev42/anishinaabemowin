@@ -8,7 +8,7 @@ tasks:
 
   dev:
     cmds:
-      - npm run dev
+      - npm run dev -- --host
     desc: Start the development server
 
   build:
