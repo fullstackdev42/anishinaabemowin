@@ -16,11 +16,20 @@ export class Play extends Phaser.Scene {
     }
 
     create() {
-        // Center the background image
-        const background = this.add.image(this.sys.game.config.width / 2, this.sys.game.config.height / 2, "background");
+        this.createBackground();
+        this.createTitleText();
+        this.load.once('complete', () => {
+            this.startGame();
+        });
+        this.load.start();
+    }
 
-        // Add title text
-        const titleText = this.add.text(
+    createBackground() {
+        this.add.image(this.sys.game.config.width / 2, this.sys.game.config.height / 2, "background");
+    }
+
+    createTitleText() {
+        this.add.text(
             this.sys.game.config.width / 2,
             50,
             'Word Match',
@@ -32,17 +41,17 @@ export class Play extends Phaser.Scene {
                 fontStyle: 'bold'
             }
         ).setOrigin(0.5);
-
-        // Ensure all resources are loaded before starting the game
-        this.load.once('complete', () => {
-            this.startGame();
-        });
-        this.load.start();
     }
 
     startGame() {
         console.log('Starting game with word pairs:', this.gameState.wordPairs);
-        // Create the card data array, ensuring English cards come first
+        const cardData = this.createCardData();
+        console.log('Creating grid with card data:', cardData);
+        this.createCardGrid(cardData);
+        this.gameState.canMove = true;
+    }
+
+    createCardData() {
         const englishCards = this.gameState.wordPairs.map(pair => ({
             text: pair.english,
             name: `${pair.english}-${pair.ojibwe}`,
@@ -54,19 +63,10 @@ export class Play extends Phaser.Scene {
             isEnglish: false
         }));
 
-        // Shuffle English and Ojibwe cards separately
         Phaser.Utils.Array.Shuffle(englishCards);
         Phaser.Utils.Array.Shuffle(ojibweCards);
 
-        // Combine the shuffled English and Ojibwe cards
-        const cardData = [...englishCards, ...ojibweCards];
-
-        console.log('Creating grid with card data:', cardData);
-        // Create the grid of cards using RexUI GridSizer
-        this.createCardGrid(cardData);
-
-        // Enable input for all cards
-        this.gameState.canMove = true;
+        return [...englishCards, ...ojibweCards];
     }
 
     createCardGrid(cardData) {
@@ -81,7 +81,7 @@ export class Play extends Phaser.Scene {
         const rows = Math.max(englishCards.length, ojibweCards.length);
 
         const cardWidth = (availableWidth - (columns - 1) * 10) / columns;
-        const cardHeight = Math.min((availableHeight - (rows - 1) * 10) / rows, 100); // Cap card height
+        const cardHeight = Math.min((availableHeight - (rows - 1) * 10) / rows, 100);
 
         const gridSizer = this.rexUI.add.gridSizer({
             x: this.sys.game.config.width / 2,
@@ -99,19 +99,18 @@ export class Play extends Phaser.Scene {
             }
         });
 
-        englishCards.forEach((data, index) => {
-            const card = this.createCard(data, cardWidth, cardHeight);
-            gridSizer.add(card.gameObject, { column: 0, row: index, align: 'center' });
-            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
-        });
-
-        ojibweCards.forEach((data, index) => {
-            const card = this.createCard(data, cardWidth, cardHeight);
-            gridSizer.add(card.gameObject, { column: 1, row: index, align: 'center' });
-            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
-        });
+        this.addCardsToGrid(gridSizer, englishCards, 0, cardWidth, cardHeight);
+        this.addCardsToGrid(gridSizer, ojibweCards, 1, cardWidth, cardHeight);
 
         gridSizer.layout();
+    }
+
+    addCardsToGrid(gridSizer, cards, column, cardWidth, cardHeight) {
+        cards.forEach((data, index) => {
+            const card = this.createCard(data, cardWidth, cardHeight);
+            gridSizer.add(card.gameObject, { column, row: index, align: 'center' });
+            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
+        });
     }
 
     createCard(data, cardWidth, cardHeight) {
