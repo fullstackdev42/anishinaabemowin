@@ -1,6 +1,7 @@
 import { Preloader } from './Preloader';
 import { Play } from './Play';
 import Phaser from 'phaser';
+import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 
 const config = {
     title: 'Word Matching Game',
@@ -17,7 +18,14 @@ const config = {
     scene: [
         Preloader,
         Play
-    ]
+    ],
+    plugins: {
+        scene: [{
+            key: 'rexUI',
+            plugin: UIPlugin,
+            mapping: 'rexUI'
+        }]
+    }
 };
 
 new Phaser.Game(config);

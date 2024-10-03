@@ -1,24 +1,9 @@
 import Phaser from 'phaser';
-import { createGameText, setupVolumeEvents, setupTitleEvents } from './PlayUtils';
-import { UIManager } from './UIManager';
-import { CardGrid } from './CardGrid';
 import { CardMatchLogic } from './CardMatchLogic';
 import { GameState } from './GameState';
-import { DebugManager } from './DebugManager';
 import { CARD_WIDTH, CARD_HEIGHT } from './constants';
 
 export class Play extends Phaser.Scene {
-    // Grid configuration
-    gridConfiguration = {
-        x: 0,
-        y: 0,
-        paddingX: 2,  // Reduced from 5
-        paddingY: 1,  // Reduced from 2
-        columns: 2,
-        rows: 5,
-        cardScale: 1
-    }
-
     constructor() {
         super({
             key: 'Play'
@@ -27,37 +12,14 @@ export class Play extends Phaser.Scene {
 
     init() {
         this.gameState = new GameState(this);
-        this.cardGrid = new CardGrid(this, this.gridConfiguration);
-        console.log('cardGrid', this.cardGrid);
-        this.cameras.main.fadeIn(500);
         this.cardMatchLogic = new CardMatchLogic(this);
-
-        // Calculate the vertical center position for the grid
-        const scaledCardHeight = CARD_HEIGHT * this.gridConfiguration.cardScale;
-        const gridHeight = (scaledCardHeight * 2) + this.gridConfiguration.paddingY;
-        this.gridConfiguration.y = (this.sys.game.config.height - gridHeight) / 2;
-
-        this.debugManager = new DebugManager(this);
-        this.debugManager.createDebugOverlay();
+        this.cameras.main.fadeIn(500);
     }
 
     create() {
         // Center the background image
         const background = this.add.image(this.sys.game.config.width / 2, this.sys.game.config.height / 2, "background");
 
-        // Scale the background to cover the entire game area while maintaining aspect ratio
-        const scaleX = this.sys.game.config.width / background.width;
-        const scaleY = this.sys.game.config.height / background.height;
-        const scale = Math.max(scaleX, scaleY);
-        background.setScale(scale);
-
-        // Initialize UIManager
-        this.uiManager = new UIManager(this, true);
-
-        // Create UI elements
-        this.uiManager.createHeader();
-        this.uiManager.createFooter();
-        const playArea = this.uiManager.createPlayArea();
 
         // Add title text
         const titleText = this.add.text(
@@ -73,33 +35,86 @@ export class Play extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        // Call volumeButton() after UIManager is initialized
-        this.volumeButton();
-
-        // Initialize game components without creating cards
-        this.gameState = new GameState(this);
-        this.cardMatchLogic = new CardMatchLogic(this);
-
-        // Initialize the CardGrid
-        this.cardGrid = new CardGrid(this, {
-            x: 50,  // Adjust these values as needed
-            y: 100,
-            paddingX: 10,
-            paddingY: 10,
-            cardScale: 1
-        });
-
         // Start the game
         this.startGame();
+    }
 
-        // Initialize DebugManager
-        this.debugManager = new DebugManager(this);
-        this.debugManager.createDebugOverlay();
+    startGame() {
+        // Create the card data array
+        const cardData = this.gameState.cardNames.flatMap(name => [
+            { text: name, name: name },
+            { text: name, name: name }
+        ]);
+        
+        // Shuffle the card data
+        Phaser.Utils.Array.Shuffle(cardData);
 
-        // Add key listener for toggling debug info
-        this.input.keyboard.on('keydown-D', () => {
-            this.debugManager.toggleVisibility();
+        // Create the grid of cards using RexUI GridSizer
+        this.createCardGrid(cardData);
+
+        // Enable input for all cards
+        this.gameState.canMove = true;
+    }
+
+    createCardGrid(cardData) {
+        const gridSizer = this.rexUI.add.gridSizer({
+            x: this.sys.game.config.width / 2,
+            y: this.sys.game.config.height / 2,
+            width: this.sys.game.config.width * 0.8,
+            height: this.sys.game.config.height * 0.8,
+            column: 2,
+            row: 5,
+            columnProportions: 1,
+            rowProportions: 1,
+            space: {
+                left: 10, right: 10, top: 10, bottom: 10,
+                column: 10,
+                row: 10,
+            }
         });
+
+        this.gameState.cards = cardData.map((data, index) => {
+            const card = this.createCard(data);
+            const col = index % 2;
+            const row = Math.floor(index / 2);
+            gridSizer.add(card.gameObject, { column: col, row: row });
+            
+            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
+            return card;
+        });
+
+        gridSizer.layout();
+    }
+
+    createCard(data) {
+        const cardWidth = CARD_WIDTH * 0.8;
+        const cardHeight = CARD_HEIGHT * 0.8;
+
+        const cardContainer = this.add.container(0, 0);
+        const cardBackground = this.add.rectangle(0, 0, cardWidth, cardHeight, 0xffffff);
+        const cardText = this.add.text(0, 0, data.text, {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#000000',
+            align: 'center'
+        }).setOrigin(0.5);
+
+        cardContainer.add([cardBackground, cardText]);
+        cardContainer.setSize(cardWidth, cardHeight);
+        cardContainer.setInteractive();
+
+        return {
+            gameObject: cardContainer,
+            data: data,
+            revealed: false,
+            hasFaceAt: (x, y) => cardContainer.getBounds().contains(x, y)
+        };
+    }
+
+    handleCardClick(card) {
+        if (this.gameState.canMove) {
+            this.cardMatchLogic.handleCardSelect(card);
+        }
     }
 
     restartGame() {
@@ -126,74 +141,6 @@ export class Play extends Phaser.Scene {
         })
     }
 
-    volumeButton() {
-        this.uiManager.createVolumeButton();
-    }
-
-    startGame() {
-        // Create the card data array
-        const cardData = this.gameState.cardNames.flatMap(name => [
-            { text: name, name: name },
-            { text: name, name: name }
-        ]);
-        
-        // Shuffle the card data
-        Phaser.Utils.Array.Shuffle(cardData);
-
-        // Create the grid of cards
-        this.gameState.cards = this.cardGrid.createGrid(cardData);
-
-        // Set up card interactions
-        this.gameState.cards.forEach(card => {
-            card.gameObject.on('pointerdown', () => this.handleCardClick(card));
-        });
-
-        // Enable input for all cards
-        this.gameState.canMove = true;
-
-        // Update debug info
-        this.debugManager.updateDebugInfo(this.gameState, this.gridConfiguration);
-    }
-
-    setupGameEvents() {
-        this.input.on(Phaser.Input.Events.POINTER_MOVE, (pointer) => {
-            this.handlePointerMove(pointer);
-        });
-        this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer) => {
-            this.handlePointerDown(pointer);
-        });
-    }
-
-    handlePointerMove(pointer) {
-        if (this.gameState.canMove) {
-            const card = this.gameState.cards.find(card => card.hasFaceAt(pointer.x, pointer.y));
-            if (card) {
-                this.input.setDefaultCursor("pointer");
-            } else {
-                const go = this.input.hitTestPointer(pointer);
-                if (go[0] && go[0].name !== "volume-icon") {
-                    this.input.setDefaultCursor("pointer");
-                } else {
-                    this.input.setDefaultCursor("default");
-                }
-            }
-        }
-    }
-
-    handlePointerDown(pointer) {
-        if (this.gameState.canMove && this.gameState.cards.length) {
-            const card = this.gameState.cards.find(card => card.hasFaceAt(pointer.x, pointer.y));
-            if (card) {
-                this.cardMatchLogic.handleCardSelect(card);
-            }
-        }
-    }
-
-    removeLife() {
-        this.uiManager.removeLife();
-        this.gameState.removeLife();
-    }
-
     checkGameStatus() {
         const status = this.gameState.checkGameStatus();
         if (status === 'gameOver') {
@@ -204,21 +151,35 @@ export class Play extends Phaser.Scene {
     }
 
     showGameOverText() {
-        this.showAnimatedText(this.gameOverText);
+        this.showAnimatedText('Game Over');
         this.gameState.canMove = false;
     }
 
     showWinnerText() {
         this.sound.play("victory");
-        this.showAnimatedText(this.winnerText);
+        this.showAnimatedText('You Win!');
         this.gameState.canMove = false;
     }
 
     showAnimatedText(text) {
-        this.uiManager.showAnimatedText(text);
-    }
+        const animatedText = this.add.text(
+            this.sys.game.config.width / 2,
+            this.sys.game.config.height / 2,
+            text,
+            {
+                fontFamily: 'Arial',
+                fontSize: '64px',
+                color: '#ffffff',
+                align: 'center',
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5).setAlpha(0);
 
-    update() {
-        this.debugManager.updateDebugInfo(this.gameState, this.gridConfiguration);
+        this.tweens.add({
+            targets: animatedText,
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2'
+        });
     }
 }
