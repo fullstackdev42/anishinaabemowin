@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { CardMatchLogic } from './CardMatchLogic';
 import { GameState } from './GameState';
-import { CARD_WIDTH, CARD_HEIGHT } from './constants';
 
 export class Play extends Phaser.Scene {
     constructor() {
@@ -56,27 +55,39 @@ export class Play extends Phaser.Scene {
     }
 
     createCardGrid(cardData) {
+        const padding = 20;
+        const titleHeight = 100; // Adjust this value based on your title's actual height
+        const gridWidth = this.sys.game.config.width - (padding * 2);
+        const gridHeight = this.sys.game.config.height - (padding * 2) - titleHeight;
+        
+        const columns = 2;
+        const rows = 5;
+
+        // Calculate card dimensions based on available space
+        const cardWidth = (gridWidth - (columns - 1) * 10) / columns;
+        const cardHeight = (gridHeight - (rows - 1) * 10) / rows;
+
         const gridSizer = this.rexUI.add.gridSizer({
             x: this.sys.game.config.width / 2,
-            y: this.sys.game.config.height / 2,
-            width: this.sys.game.config.width * 0.8,
-            height: this.sys.game.config.height * 0.8,
-            column: 2,
-            row: 5,
+            y: (this.sys.game.config.height + titleHeight) / 2,
+            width: gridWidth,
+            height: gridHeight,
+            column: columns,
+            row: rows,
             columnProportions: 1,
             rowProportions: 1,
             space: {
-                left: 10, right: 10, top: 10, bottom: 10,
+                left: padding, right: padding, top: padding, bottom: padding,
                 column: 10,
                 row: 10,
             }
         });
 
         this.gameState.cards = cardData.map((data, index) => {
-            const card = this.createCard(data);
+            const card = this.createCard(data, cardWidth, cardHeight);
             const col = index % 2;
             const row = Math.floor(index / 2);
-            gridSizer.add(card.gameObject, { column: col, row: row });
+            gridSizer.add(card.gameObject, { column: col, row: row, align: 'center' });
             
             card.gameObject.on('pointerdown', () => this.handleCardClick(card));
             return card;
@@ -85,17 +96,15 @@ export class Play extends Phaser.Scene {
         gridSizer.layout();
     }
 
-    createCard(data) {
-        const cardWidth = CARD_WIDTH * 0.8;
-        const cardHeight = CARD_HEIGHT * 0.8;
-
+    createCard(data, cardWidth, cardHeight) {
         const cardContainer = this.add.container(0, 0);
         const cardBackground = this.add.rectangle(0, 0, cardWidth, cardHeight, 0xffffff);
         const cardText = this.add.text(0, 0, data.text, {
             fontFamily: 'Arial',
-            fontSize: '24px',
+            fontSize: '16px',
             color: '#000000',
-            align: 'center'
+            align: 'center',
+            wordWrap: { width: cardWidth - 10 }
         }).setOrigin(0.5);
 
         cardContainer.add([cardBackground, cardText]);

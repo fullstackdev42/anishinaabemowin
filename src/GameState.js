@@ -4,7 +4,7 @@ export class GameState {
         this.wordPairs = [
             { english: "apple", ojibwe: "mishiimin" },
             { english: "dog", ojibwe: "animosh" },
-            { english: "water", ojibwe: "nibi" },
+            { english: "water", ojibwe: "biish" },
             { english: "sun", ojibwe: "giizis" },
             { english: "tree", ojibwe: "mitig" }
         ];
